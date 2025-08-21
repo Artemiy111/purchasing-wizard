@@ -12,12 +12,17 @@
     "format:fix": "biome format --write"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.11",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/router-plugin": "^1.131.27",
     "@tanstack/solid-router": "^1.131.27",
     "@tanstack/solid-router-devtools": "^1.131.27",
+    "class-variance-authority": "^0.7.1",
     "solid-js": "^1.9.9",
-    "tailwindcss": "^4.1.12"
+    "tailwind-merge": "^3.3.1",
+    "tailwind-variants": "^2.1.0",
+    "tailwindcss": "^4.1.12",
+    "tw-animate-css": "^1.3.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
