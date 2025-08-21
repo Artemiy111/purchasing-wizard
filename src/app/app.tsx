@@ -1,8 +1,8 @@
 import { RouterProvider, createRouter } from '@tanstack/solid-router'
 import { render } from 'solid-js/web'
 
-import { routeTree } from './routeTree.gen'
-import './styles.css'
+import { routeTree } from '~/routeTree.gen'
+import '~/shared/assets/css/main.css'
 
 const router = createRouter({
   routeTree,
@@ -25,7 +25,7 @@ function App() {
   )
 }
 
-const rootElement = document.getElementById('app')
-if (rootElement) {
-  render(() => <App />, rootElement)
+const root = document.getElementById('root')
+if (root) {
+  render(() => <App />, root)
 }

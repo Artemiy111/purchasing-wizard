@@ -1,13 +1,12 @@
-import * as Solid from 'solid-js'
 import { createFileRoute } from '@tanstack/solid-router'
 
-import logo from '../logo.svg'
+import logo from '~/logo.svg'
 
 export const Route = createFileRoute('/')({
-  component: IndexComponent,
+  component: HomePage,
 })
 
-function IndexComponent() {
+function HomePage() {
   return (
     <div class="text-center">
       <header class="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
