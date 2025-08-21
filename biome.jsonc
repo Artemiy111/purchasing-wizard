@@ -6,10 +6,7 @@
     "useIgnoreFile": false
   },
   "files": {
-    "includes": [
-      "**",
-      "!src/routeTree.gen.ts"
-    ],
+    "includes": ["**", "!src/routeTree.gen.ts"],
     "ignoreUnknown": false
   },
   "formatter": {
@@ -31,7 +28,7 @@
     }
   },
   "javascript": {
-    "jsxRuntime": "transparent",
+    "jsxRuntime": "reactClassic",
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "asNeeded"

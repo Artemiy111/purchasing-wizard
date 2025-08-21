@@ -76,7 +76,7 @@
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
-  
+
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -181,7 +181,7 @@
 @utility container {
   @apply px-8;
 
-  @media (width >=--theme(--breakpoint-sm)) {
+  @media (width >= --theme(--breakpoint-sm)) {
     @apply max-w-none;
   }
 

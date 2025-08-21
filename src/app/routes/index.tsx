@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/solid-router'
 
 import logo from '~/logo.svg'
+import { Button } from '~/shared/ui'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -34,6 +35,10 @@ function HomePage() {
         >
           Learn TanStack
         </a>
+        <a href="/about">about</a>
+        <Button>Button</Button>
+        <Button variant="ghost">Button</Button>
+        <Button variant={'outline'}>Button</Button>
       </header>
     </div>
   )
