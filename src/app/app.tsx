@@ -23,7 +23,7 @@ function App() {
   return (
     <>
       <ColorModeScript storageType={storageManager.type} />
-       <ColorModeProvider storageManager={storageManager}>
+      <ColorModeProvider storageManager={storageManager}>
         <RouterProvider router={router} />
       </ColorModeProvider>
     </>

@@ -1,8 +1,8 @@
-import type { ValidComponent } from 'solid-js'
-import { Match, splitProps, Switch } from 'solid-js'
-
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: gen */
 import * as CheckboxPrimitive from '@kobalte/core/checkbox'
 import type { PolymorphicProps } from '@kobalte/core/polymorphic'
+import type { ValidComponent } from 'solid-js'
+import { Match, Switch, splitProps } from 'solid-js'
 
 import { cn } from '~/shared/lib'
 
