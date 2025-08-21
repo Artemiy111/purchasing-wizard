@@ -3,6 +3,8 @@ import { createRouter, RouterProvider } from '@tanstack/solid-router'
 import { render } from 'solid-js/web'
 import { routeTree } from '~/routeTree.gen'
 import '~/shared/assets/css/main.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
+import { SolidQueryDevtools } from '@tanstack/solid-query-devtools'
 
 const router = createRouter({
   routeTree,
@@ -17,6 +19,8 @@ declare module '@tanstack/solid-router' {
   }
 }
 
+const qc = new QueryClient()
+
 function App() {
   const storageManager = createLocalStorageManager('ui-theme')
 
@@ -24,7 +28,10 @@ function App() {
     <>
       <ColorModeScript storageType={storageManager.type} />
       <ColorModeProvider storageManager={storageManager}>
-        <RouterProvider router={router} />
+        <QueryClientProvider client={qc}>
+          <RouterProvider router={router} />
+          <SolidQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
       </ColorModeProvider>
     </>
   )
