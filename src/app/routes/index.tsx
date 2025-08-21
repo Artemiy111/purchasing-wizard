@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/solid-router'
+import { createFileRoute } from '@tanstack/solid-router';
 
-import logo from '~/logo.svg'
+import logo from '~/logo.svg';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
-})
+});
 
 function HomePage() {
   return (
@@ -36,5 +36,5 @@ function HomePage() {
         </a>
       </header>
     </div>
-  )
+  );
 }
