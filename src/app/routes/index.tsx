@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/solid-query'
 import { createFileRoute } from '@tanstack/solid-router'
-
+import { For, Suspense } from 'solid-js'
 import logo from '~/logo.svg'
+import { samson } from '~/shared/api'
 import { Button } from '~/shared/ui'
 
 export const Route = createFileRoute('/')({
@@ -8,6 +10,12 @@ export const Route = createFileRoute('/')({
 })
 
 function HomePage() {
+  const query = useQuery(() => ({
+    queryKey: ['products'],
+    queryFn: () => samson.api.getProducts({}),
+    refetchOnMount: false,
+  }))
+
   return (
     <div class="text-center">
       <header class="flex min-h-screen flex-col items-center justify-center bg-[#282c34] text-[calc(10px+2vmin)] text-white">
@@ -16,9 +24,7 @@ function HomePage() {
           class="pointer-events-none h-[40vmin] animate-[spin_20s_linear_infinite]"
           alt="logo"
         />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
-        </p>
+        <p></p>
         <a
           class="text-[#61dafb] hover:underline"
           href="https://solidjs.com"
@@ -36,9 +42,14 @@ function HomePage() {
           Learn TanStack
         </a>
         <a href="/about">about</a>
-        <Button>Button</Button>
-        <Button variant="ghost">Button</Button>
-        <Button variant={'outline'}>Button</Button>
+
+        <Button variant="ghost" onclick={() => samson.api.getProducts({})}>
+          Button
+        </Button>
+
+        <Suspense>
+          <For each={query.data}>{(item) => <pre>{JSON.stringify(item, null, 2)}</pre>}</For>
+        </Suspense>
       </header>
     </div>
   )

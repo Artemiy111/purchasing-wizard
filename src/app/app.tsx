@@ -19,7 +19,14 @@ declare module '@tanstack/solid-router' {
   }
 }
 
-const qc = new QueryClient()
+const qc = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+})
 
 function App() {
   const storageManager = createLocalStorageManager('ui-theme')
