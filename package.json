@@ -23,6 +23,7 @@
     "@tanstack/solid-table": "^8.21.3",
     "arktype": "^2.1.20",
     "class-variance-authority": "^0.7.1",
+    "flexsearch": "^0.8.205",
     "ofetch": "^1.4.1",
     "solid-js": "^1.9.9",
     "tailwind-merge": "^3.3.1",
