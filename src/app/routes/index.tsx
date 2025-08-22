@@ -1,72 +1,51 @@
 import { createFileRoute, Link } from '@tanstack/solid-router'
-import { Charset, Index, IndexedDB, Worker} from 'flexsearch'
+import { Charset, Index, IndexedDB, Worker } from 'flexsearch'
 import { createMemo, createSignal, For } from 'solid-js'
-import { TextField, TextFieldInput } from '~/shared/ui/kit'
+import { Button, TextField, TextFieldInput } from '~/shared/ui/kit'
+import { mockProducts } from './config'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
-type GenericProduct = {
-  provider: "komus" | "samson"
-  name: string
-  description: string | null
-  manifacturer: string | null
-  sku: string | null
-  barcode: string | null
-}
-
-const mockData: GenericProduct[] = [
-  {
-    provider: "komus",
-    name: 'Product 1',
-    description: 'Description 1',
-    manifacturer: 'Manufacturer 1',
-    sku: 'SKU1',
-    barcode: 'Barcode1',
-  },
-  {
-    provider: "komus",
-    name: 'Черешня 2',
-    description: 'Description 2',
-    manifacturer: 'Manufacturer 2',
-    sku: 'SKU2',
-    barcode: 'Barcode2',
-  },
-]
-
 const index = new Index({
   tokenize: 'forward',
-  'fastupdate': true,
-  encoder: Charset.LatinBalance
+  fastupdate: true,
+  encoder: Charset.LatinBalance,
+  cache: 100,
 })
 
+const [products] = createSignal(mockProducts)
+
+for (const item of products()) {
+  index.add(item._id, item.name)
+}
 
 function HomePage() {
   const [search, setSearch] = createSignal('')
 
   const result = createMemo(() => {
-    if (!search()) return mockData.map(d => d.name)
-    const res = index.search(search(), {
+    if (!search()) return products()
+    const ids = index.search(search(), {
       suggest: true,
-      limit: 10
+      limit: 10,
     })
+    const res = ids.map((id) => products().find((item) => item._id === id)!)
     return res
   })
 
   return (
     <div class="text-center">
-      <header class="flex min-h-screen flex-col items-center justify-center bg-[#282c34] text-sm text-white">
+      <header class="flex min-h-screen flex-col items-center bg-[#282c34] pt-20 text-sm text-white">
         <Link to="/komus">komus</Link>
         <Link to="/samson">samson</Link>
+        <Button onClick={() => index.export()}>Export</Button>
 
         <TextField>
-          <TextFieldInput value={search()} onInput={setSearch} />
+          <TextFieldInput value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
         </TextField>
 
-        <For each={result()}>{item => (
-          <div>{item}</div>
-        )}</For>
+        <For each={result()}>{(item) => <div>{item.name}</div>}</For>
       </header>
     </div>
   )

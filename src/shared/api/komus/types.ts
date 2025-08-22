@@ -1,8 +1,80 @@
 import { type } from 'arktype'
+import type { UniversalPrices, UniversalProduct } from '../universal'
+
+export const GetProductsPricesRequestParams = type({
+  format: '"json" | "xml" = "json"',
+})
+
+export const GetProductsPricesRequest = type({
+  artnumbers: '1 <= number.integer[] <= 250',
+})
+
+export type GetProductsPricesRequest = typeof GetProductsPricesRequest.inferIn
+
+export const ProductPricesRegional = type({
+  region: 'number.integer', // Идентификатор региона в Комус-опт
+  partnerPrice: 'number', // Цена партнера (с учетом ценовых условий партнера, но без учета доп. скидок) в рублях с округлением до 2-х знаков.
+  rrcPrice: 'number', // Рекомендованная розничная цена для розничного магазина в рублях с округлением до 2-х знаков.
+  pricePmc: 'number', // Порог минимальной цены для интернет магазина (ПМЦ) в рублях с округлением до 2-х знаков
+  modTime: 'string.date | null', // Изменение цен в формате full-date full-time "YYYY-MM-DD HH:MM:SS"
+})
+
+export type ProductPricesRegional = typeof ProductPricesRegional.infer
+
+export const ProductPriceItem = type({
+  artnumber: 'number.integer', // Артикул товара
+  nds: 'number',
+  prices: ProductPricesRegional.array(),
+}).pipe((item) => {
+  const { prices: regionalPrices, ...rest } = item
+  return { regionalPrices, ...rest }
+})
+
+export type ProductPriceItem = typeof ProductPriceItem.infer
+
+export const GetProductsPricesResponse = type({
+  content: ProductPriceItem.array().pipe((arr) => {
+    const entries = arr.map((item) => [item.artnumber, item])
+    console.log('entries', entries)
+    const prices = Object.fromEntries(entries) as Record<string, ProductPriceItem>
+    return prices
+  }),
+  'artnumberLost?': 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
+})
+
+export const toUniversalPrices = (price: ProductPriceItem): UniversalPrices => {
+  return {
+    retail: price.regionalPrices[0]!.rrcPrice,
+    partner: price.regionalPrices[0]!.partnerPrice,
+  }
+}
+
+export type GetProductsPricesResponse = typeof GetProductsPricesResponse.infer
+
+export const GetProductsStocksRequest = type({
+  artnumbers: '1 <= number.integer[] <= 250',
+})
+
+export type GetProductsStocksRequest = typeof GetProductsStocksRequest.inferIn
+
+export const GetProductsStocksResponse = type({
+  content: type({
+    artnumber: 'number.integer',
+    stock: {
+      region: 'number.integer', // Идентификатор региона в Комус-опт
+      quantity: 'number.integer', // Остатки по региону, шт.
+    },
+  })
+    .array()
+    .atLeastLength(1),
+  artnumberLost: 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
+})
+
+export type GetProductsStocksResponse = typeof GetProductsStocksResponse.infer
 
 export const GetProductsRequest = type({
   format: '"json" | "xml" = "json"',
-  limit: '1 <= number <= 1000 = 50',
+  limit: '1 <= number <= 1000 = 1000',
   page: 'number = 1',
 })
 
@@ -23,6 +95,27 @@ export const Product = type({
 
 export type Product = typeof Product.inferOut
 
+type UniversalProductTemplate = Omit<UniversalProduct, 'prices'>
+
+export const toUniversalProductTemplate = (product: Product): UniversalProductTemplate => ({
+  _id: `komus:${product.artnumber}`,
+  _provider: 'komus',
+  name: product.name,
+  description: null,
+  sku: product.artnumber.toString(),
+  barcodes: [],
+  brand: null,
+  manifacturer: null,
+})
+
+export const toUniversalProduct = (
+  productTemplate: UniversalProductTemplate,
+  prices: ProductPriceItem,
+): UniversalProduct => ({
+  ...productTemplate,
+  prices: toUniversalPrices(prices),
+})
+
 export const GetProductsResponse = type({
   content: Product.array(),
   count: 'number.integer',
@@ -42,3 +135,5 @@ export const GetProductsResponse = type({
     },
   },
 }))
+
+export type GetProductsResponse = typeof GetProductsResponse.infer

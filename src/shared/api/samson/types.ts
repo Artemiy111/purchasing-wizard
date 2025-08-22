@@ -1,11 +1,12 @@
 import { type } from 'arktype'
+import type { UniversalProduct } from '../universal'
 
 export const GetProductsRequest = type({
   response_format: '"json" | "xml" = "json"',
-  pagination_count: 'number = 10000',
-  pagination_page: 'number = 1',
+  pagination_count: 'number.integer <= 10000 = 10000',
+  pagination_page: 'number.integer = 1',
   'sort_type?': '"price" | "date" | "name" | "popularity"',
-  photo_size: '"s" | "x" = "x"',
+  photo_size: '"s" | "x" = "s"',
   'brand?': 'string[]',
   category: 'string = ""',
   code: 'string = ""', // разделитель - запятая
@@ -24,22 +25,60 @@ const RuDate = type.string
   })
   .to('null | string.date')
 
+const PriceList = type({
+  /**
+   * contract - договорная цена
+   * infiltration - Рекомендованная розничная цена
+   */
+  type: '"contract" | "infiltration"',
+  value: 'number',
+})
+  .array()
+  .pipe((arr) => {
+    const entries = arr.map((price) => [price.type, price.value])
+    return Object.fromEntries(entries)
+  })
+  .to({
+    contract: 'number',
+    infiltration: 'number',
+  })
+  .pipe((prices) => ({
+    retail: prices.infiltration,
+    partner: prices.contract,
+  }))
+
+const StockList = type({
+  type: '"idp" | "transit" | "distribution_warehouse" | "total"',
+  value: 'number',
+})
+  .array()
+  .pipe((arr) => {
+    const entries = arr.map((stock) => [stock.type, stock.value])
+    return Object.fromEntries(entries)
+  })
+  .to({
+    idp: 'number',
+    transit: 'number',
+    distribution_warehouse: 'number',
+    total: 'number',
+  })
+
 export const Product = type({
-  sku: 'number.integer', // Код
+  sku: '100000 <= number.integer <= 999999', // Код
   name: 'string', // Наименование продукта
   // name_1c: 'string', // Наименование продукта в 1С
   category_list: 'number[]', // Список категорий
   manufacturer: 'string', // Производитель
   vendor_code: 'string', // Артикул
   barcode: MaybeEmptyString, // Штрихкод
-  brand: 'string', // Бренд
+  brand: type('string').pipe((s) => (s === 'NO NAME' ? null : s)), // Бренд
   description: 'string', // Описание
   description_ext: 'string', // Расширенное описание
   weight: 'number', // Вес
   volume: 'number', // Объем
   nds: 'number',
-  ban_not_multiple: '0 | 1', // Запрет некратного набора
-  out_of_stock: '0 | 1', // Вывод из ассортимента:
+  ban_not_multiple: type('0 | 1').pipe((v) => Boolean(v)), // Запрет некратного набора
+  out_of_stock: type('0 | 1').pipe((v) => Boolean(v)), // Вывод из ассортимента
   remove_date: RuDate, // Дата распродажи
   sale_date: RuDate, // Дата распродажи
   expiration_date: '0 | number.epoch', // Срок годности
@@ -48,22 +87,23 @@ export const Product = type({
   // certificate_list: 'string[]',
   // photo_list: 'string[]',
   // package_list: 'Array', // Список размерностей упаковки
-  price_list: type({
-    /**
-     * contract - договорная цена
-     * infiltration - Рекомендованная розничная цена
-     */
-    type: '"contract" | "infiltration"',
-    value: 'number',
-  }).array(),
-  // Список остатков
-  stock_list: type({
-    type: '"idp" | "transit" | "distribution_warehouse" | "total"',
-    value: 'number',
-  }).array(),
+  price_list: PriceList,
+  stock_list: StockList, // Список остатков
 }).onUndeclaredKey('delete')
 
 export type Product = typeof Product.inferOut
+
+export const toUniversalProduct = (product: Product): UniversalProduct => ({
+  _id: `samson:${product.sku}`,
+  _provider: 'samson',
+  name: product.name,
+  description: product.description,
+  sku: product.sku.toString(),
+  barcodes: product.barcode ? [product.barcode] : [],
+  prices: product.price_list,
+  manifacturer: product.manufacturer,
+  brand: product.brand,
+})
 
 export const GetProductsResponse = type({
   data: Product.array(),

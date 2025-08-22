@@ -11,13 +11,18 @@ export const Route = createFileRoute('/samson')({
 function SamsonPage() {
   const query = useQuery(() => ({
     queryKey: ['samson/products'],
-    queryFn: () => samson.api.getProducts({}),
+    queryFn: async () => {
+      const res = await samson.api.getProducts({})
+      const universalProducts = res.data.map((p) => samson.toUniversalProduct(p))
+
+      return { data: universalProducts, meta: res.meta }
+    },
     refetchOnMount: false,
   }))
 
   return (
     <main>
-      <Button variant="ghost" onclick={() => samson.api.getProducts({})}>
+      <Button variant="ghost" onclick={() => query.refetch()}>
         Button
       </Button>
 

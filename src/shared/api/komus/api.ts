@@ -1,5 +1,3 @@
-import { type } from 'arktype'
-
 import { ofetch } from 'ofetch'
 import * as t from './types'
 
@@ -16,19 +14,35 @@ export const api = {
    * @see https://komus-opt.ru/api2/docs/api.html#tag/Tovary/operation/getAllElements
    */
   getProducts: async (params_: t.GetProductsRequest) => {
-    const params = t.GetProductsRequest(params_)
-    if (params instanceof type.errors) throw params.toTraversalError()
+    const params = t.GetProductsRequest.from(params_)
 
     try {
       const res = await $fetch('/elements', { params })
-      const validated = t.GetProductsResponse(res)
-
-      if (validated instanceof type.errors) throw validated
+      const validated = t.GetProductsResponse.from(res)
       return validated
     } catch (e) {
-      const error = t.GetProductsRequestError(e)
-      if (error instanceof type.errors) throw error.toTraversalError()
+      if (e instanceof Error) throw e
+      const error = t.GetProductsRequestError.assert(e)
       throw Error(error.message, { cause: error.details })
     }
+  },
+
+  getProductsPrices: async (body_: t.GetProductsPricesRequest) => {
+    const body = t.GetProductsPricesRequest.from(body_)
+
+    const res = await $fetch('/prices', { method: 'POST', body })
+    const validated = t.GetProductsPricesResponse.from(res)
+
+    return validated
+  },
+
+  getProductsStocks: async (body_: t.GetProductsStocksRequest) => {
+    const body = t.GetProductsStocksRequest.from(body_)
+
+    const res = await $fetch('/stocks', { method: 'POST', body })
+    console.log(res)
+    const validated = t.GetProductsStocksResponse.from(res)
+    console.log(validated)
+    return validated
   },
 }
