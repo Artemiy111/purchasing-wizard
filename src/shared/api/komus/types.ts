@@ -98,8 +98,8 @@ export type Product = typeof Product.inferOut
 type UniversalProductTemplate = Omit<UniversalProduct, 'prices'>
 
 export const toUniversalProductTemplate = (product: Product): UniversalProductTemplate => ({
-  _id: `komus:${product.artnumber}`,
-  _provider: 'komus',
+  id: `komus:${product.artnumber}`,
+  provider: 'komus',
   name: product.name,
   description: null,
   sku: product.artnumber.toString(),

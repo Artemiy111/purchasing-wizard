@@ -94,8 +94,8 @@ export const Product = type({
 export type Product = typeof Product.inferOut
 
 export const toUniversalProduct = (product: Product): UniversalProduct => ({
-  _id: `samson:${product.sku}`,
-  _provider: 'samson',
+  id: `samson:${product.sku}`,
+  provider: 'samson',
   name: product.name,
   description: product.description,
   sku: product.sku.toString(),
@@ -105,6 +105,14 @@ export const toUniversalProduct = (product: Product): UniversalProduct => ({
   brand: product.brand,
 })
 
+const getPaginationPage = (url: string) => {
+  const params = new URLSearchParams(new URL(url).search)
+  const param = "pagination_page"
+  console.log(params, params.has(param), params.get(param))
+  const page = params.has(param) ? parseInt(params.get(param)!, 10) : null
+  return page
+}
+
 export const GetProductsResponse = type({
   data: Product.array(),
   meta: {
@@ -112,8 +120,8 @@ export const GetProductsResponse = type({
       'previous?': 'string.url',
       'next?': 'string.url',
     }).pipe((p) => ({
-      previousUrl: p.previous ?? null,
-      nextUrl: p.next ?? null,
+      prevPage: p.previous ? getPaginationPage(p.previous) : null,
+      nextPage: p.next ? getPaginationPage(p.next) : null,
     })),
   },
 })

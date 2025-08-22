@@ -13,11 +13,11 @@ export const api = {
   /**
    * @see https://api.samsonopt.ru/v1/doc/index.html#tag/Tovary/paths/~1sku/get
    */
-  getProducts: async (params_: t.GetProductsRequest) => {
+  getProducts: async (params_: t.GetProductsRequest, signal?: AbortSignal) => {
     const params = t.GetProductsRequest.from(params_)
 
     try {
-      const res = await $fetch('/sku', { params })
+      const res = await $fetch('/sku', { params, signal })
       console.log(res)
       const validated = t.GetProductsResponse.from(res)
       console.log(validated)

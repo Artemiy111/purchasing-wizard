@@ -18,7 +18,7 @@ const index = new Index({
 const [products] = createSignal(mockProducts)
 
 for (const item of products()) {
-  index.add(item._id, item.name)
+  index.add(item.id, item.name)
 }
 
 function HomePage() {
@@ -30,7 +30,7 @@ function HomePage() {
       suggest: true,
       limit: 10,
     })
-    const res = ids.map((id) => products().find((item) => item._id === id)!)
+    const res = ids.map((id) => products().find((item) => item.id === id)!)
     return res
   })
 
