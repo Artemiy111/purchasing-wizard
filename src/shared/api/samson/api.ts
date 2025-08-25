@@ -10,6 +10,12 @@ const $fetch = ofetch.create({
 })
 
 export const api = {
+  async getUniversalProducts(params: t.GetProductsRequest, signal?: AbortSignal) {
+    const res = await this.getProducts(params, signal)
+    const products = res.data.map((product) => t.toUniversalProduct(product))
+    return { data: products, meta: res.meta }
+  },
+
   /**
    * @see https://api.samsonopt.ru/v1/doc/index.html#tag/Tovary/paths/~1sku/get
    */

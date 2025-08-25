@@ -2,15 +2,27 @@ import { type } from 'arktype'
 import type { UniversalProduct } from '../universal'
 
 export const GetProductsRequest = type({
-  response_format: '"json" | "xml" = "json"',
-  pagination_count: 'number.integer <= 10000 = 10000',
-  pagination_page: 'number.integer = 1',
-  'sort_type?': '"price" | "date" | "name" | "popularity"',
-  photo_size: '"s" | "x" = "s"',
-  'brand?': 'string[]',
-  category: 'string = ""',
-  code: 'string = ""', // разделитель - запятая
+  pageIndex: 'number = 0',
+  pageSize: 'number.integer <= 1000 = 1000',
 })
+  .pipe((data) => {
+    const { pageIndex, pageSize, ...rest } = data
+    return {
+      pagination_page: pageIndex + 1,
+      pagination_count: pageSize,
+      ...rest,
+    }
+  })
+  .to({
+    response_format: '"json" | "xml" = "json"',
+    pagination_count: 'number.integer <= 10000 = 10000',
+    pagination_page: 'number.integer = 1',
+    'sort_type?': '"price" | "date" | "name" | "popularity"',
+    photo_size: '"s" | "x" = "s"',
+    'brand?': 'string[]',
+    category: 'string = ""',
+    code: 'string = ""', // разделитель - запятая
+  })
 
 export type GetProductsRequest = typeof GetProductsRequest.inferIn
 
@@ -48,6 +60,12 @@ const PriceList = type({
   }))
 
 const StockList = type({
+  /**
+   * idp - остаток в филиале
+   * transit - количество в пути
+   * distribution_warehouse - остатки на РЦ
+   * total - сумма остатков
+   */
   type: '"idp" | "transit" | "distribution_warehouse" | "total"',
   value: 'number',
 })
@@ -81,11 +99,11 @@ export const Product = type({
   out_of_stock: type('0 | 1').pipe((v) => Boolean(v)), // Вывод из ассортимента
   remove_date: RuDate, // Дата распродажи
   sale_date: RuDate, // Дата распродажи
-  expiration_date: type('number.epoch').pipe(v => v === 0 ? undefined : v), // Срок годности
+  expiration_date: type('number.epoch').pipe((v) => (v === 0 ? undefined : v)), // Срок годности
   // video_list: 'string[]',
   // file_list: 'string[]',
   // certificate_list: 'string[]',
-  // photo_list: 'string[]',
+  photo_list: 'string[]',
   // package_list: 'Array', // Список размерностей упаковки
   price_list: PriceList,
   stock_list: StockList, // Список остатков
@@ -101,13 +119,14 @@ export const toUniversalProduct = (product: Product): UniversalProduct => ({
   sku: product.sku.toString(),
   barcodes: product.barcode ? [product.barcode] : [],
   prices: product.price_list,
-  manifacturer: product.manufacturer,
   brand: product.brand,
+  stock: product.stock_list.idp, // ? точно ли
+  image: product.photo_list[0],
 })
 
 const getPaginationPage = (url: string) => {
   const params = new URLSearchParams(new URL(url).search)
-  const param = "pagination_page"
+  const param = 'pagination_page'
   console.log(params, params.has(param), params.get(param))
   const page = params.has(param) ? parseInt(params.get(param)!, 10) : undefined
   return page

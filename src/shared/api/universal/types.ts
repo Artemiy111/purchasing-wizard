@@ -17,7 +17,11 @@ export const UniversalProduct = type({
   barcodes: 'string[]',
   prices: UniversalPrices,
   brand: 'string | undefined',
-  manifacturer: 'string | undefined',
+  stock: 'number.integer',
+  image: 'string | undefined',
 })
+
+// export const universalStock = type({
+// total: 'number.integer',
 
 export type UniversalProduct = typeof UniversalProduct.infer

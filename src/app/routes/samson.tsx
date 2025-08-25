@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/solid-query'
 import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createEffect, For, on, Suspense } from 'solid-js'
-import { samsonQueryOptions } from '~/shared/model/samson'
+import { samsonQueryOptions } from '~/shared/model/products'
 import { Button } from '~/shared/ui'
 
 export const Route = createFileRoute('/samson')({
@@ -36,7 +36,9 @@ function SamsonPage() {
         <For each={query.data?.pages}>
           {(page) => (
             <>
-              <For each={page.data}>{(product) => <div>{product.name}</div>}</For>
+              <For each={page.data}>
+                {(product) => <pre>{JSON.stringify(product, null, 2)}</pre>}
+              </For>
             </>
           )}
         </For>

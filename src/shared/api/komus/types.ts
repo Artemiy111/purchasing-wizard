@@ -16,7 +16,7 @@ export const ProductPricesRegional = type({
   partnerPrice: 'number', // Цена партнера (с учетом ценовых условий партнера, но без учета доп. скидок) в рублях с округлением до 2-х знаков.
   rrcPrice: 'number', // Рекомендованная розничная цена для розничного магазина в рублях с округлением до 2-х знаков.
   pricePmc: 'number', // Порог минимальной цены для интернет магазина (ПМЦ) в рублях с округлением до 2-х знаков
-  modTime: type('string.date | null').pipe(v => v === null ? undefined : v), // Изменение цен в формате full-date full-time "YYYY-MM-DD HH:MM:SS"
+  modTime: type('string.date | null').pipe((v) => (v === null ? undefined : v)), // Изменение цен в формате full-date full-time "YYYY-MM-DD HH:MM:SS"
 })
 
 export type ProductPricesRegional = typeof ProductPricesRegional.infer
@@ -60,23 +60,37 @@ export type GetProductsStocksRequest = typeof GetProductsStocksRequest.inferIn
 export const GetProductsStocksResponse = type({
   content: type({
     artnumber: 'number.integer',
-    stock: {
+    stock: type({
       region: 'number.integer', // Идентификатор региона в Комус-опт
       quantity: 'number.integer', // Остатки по региону, шт.
-    },
+    })
+      .array()
+      .atLeastLength(1),
   })
     .array()
-    .atLeastLength(1),
-  artnumberLost: 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
+    .atLeastLength(1)
+    .pipe((arr) => {
+      const entries = arr.map((item) => [item.artnumber, item])
+      return Object.fromEntries(entries) as Record<string, (typeof arr)[number]>
+    }),
+  'artnumberLost?': 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
 })
 
 export type GetProductsStocksResponse = typeof GetProductsStocksResponse.infer
 
 export const GetProductsRequest = type({
-  format: '"json" | "xml" = "json"',
-  limit: '1 <= number <= 1000 = 1000',
-  page: 'number = 1',
+  pageIndex: 'number = 0',
+  pageSize: '1 <= number <= 1000 = 1000',
 })
+  .pipe((data) => ({
+    page: data.pageIndex + 1,
+    limit: data.pageSize,
+  }))
+  .to({
+    format: '"json" | "xml" = "json"',
+    limit: '1 <= number <= 1000 = 1000',
+    page: 'number = 1',
+  })
 
 export const GetProductsRequestError = type({
   status: 'string',
@@ -90,7 +104,7 @@ export const Product = type({
   artnumber: 'number.integer', // Артикул товара
   categoryId: 'number.integer',
   name: 'string',
-  image: 'string',
+  image: type('string').pipe((s) => `https://komus-opt.ru/${s}`),
 })
 
 export type Product = typeof Product.inferOut
@@ -105,7 +119,8 @@ export const toUniversalProductTemplate = (product: Product): UniversalProductTe
   sku: product.artnumber.toString(),
   barcodes: [],
   brand: undefined,
-  manifacturer: undefined,
+  stock: 0,
+  image: product.image,
 })
 
 export const toUniversalProduct = (
