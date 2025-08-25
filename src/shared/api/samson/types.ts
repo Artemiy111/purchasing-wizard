@@ -14,16 +14,16 @@ export const GetProductsRequest = type({
 
 export type GetProductsRequest = typeof GetProductsRequest.inferIn
 
-const MaybeEmptyString = type('string').pipe((s) => (s === '' ? null : s))
+const MaybeEmptyString = type('string').pipe((s) => (s === '' ? undefined : s))
 
 const RuDate = type.string
   .pipe((d) => {
-    if (d === '') return null
+    if (d === '') return undefined
     const [day, month, year] = d.split('.')
     const output = `${year}-${month}-${day}`
     return output
   })
-  .to('null | string.date')
+  .to('string.date | undefined')
 
 const PriceList = type({
   /**
@@ -71,7 +71,7 @@ export const Product = type({
   manufacturer: 'string', // Производитель
   vendor_code: 'string', // Артикул
   barcode: MaybeEmptyString, // Штрихкод
-  brand: type('string').pipe((s) => (s === 'NO NAME' ? null : s)), // Бренд
+  brand: type('string').pipe((s) => (s === 'NO NAME' ? undefined : s)), // Бренд
   description: 'string', // Описание
   description_ext: 'string', // Расширенное описание
   weight: 'number', // Вес
@@ -81,7 +81,7 @@ export const Product = type({
   out_of_stock: type('0 | 1').pipe((v) => Boolean(v)), // Вывод из ассортимента
   remove_date: RuDate, // Дата распродажи
   sale_date: RuDate, // Дата распродажи
-  expiration_date: '0 | number.epoch', // Срок годности
+  expiration_date: type('number.epoch').pipe(v => v === 0 ? undefined : v), // Срок годности
   // video_list: 'string[]',
   // file_list: 'string[]',
   // certificate_list: 'string[]',
@@ -109,7 +109,7 @@ const getPaginationPage = (url: string) => {
   const params = new URLSearchParams(new URL(url).search)
   const param = "pagination_page"
   console.log(params, params.has(param), params.get(param))
-  const page = params.has(param) ? parseInt(params.get(param)!, 10) : null
+  const page = params.has(param) ? parseInt(params.get(param)!, 10) : undefined
   return page
 }
 
@@ -120,8 +120,8 @@ export const GetProductsResponse = type({
       'previous?': 'string.url',
       'next?': 'string.url',
     }).pipe((p) => ({
-      prevPage: p.previous ? getPaginationPage(p.previous) : null,
-      nextPage: p.next ? getPaginationPage(p.next) : null,
+      prevPage: p.previous ? getPaginationPage(p.previous) : undefined,
+      nextPage: p.next ? getPaginationPage(p.next) : undefined,
     })),
   },
 })

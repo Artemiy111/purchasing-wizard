@@ -1,7 +1,7 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/solid-query'
-import { createFileRoute } from '@tanstack/solid-router'
+import { useInfiniteQuery } from '@tanstack/solid-query'
+import { createFileRoute, Link } from '@tanstack/solid-router'
 import { createEffect, For, on, Suspense } from 'solid-js'
-import { samson } from '~/shared/api'
+import { samsonQueryOptions } from '~/shared/model/samson'
 import { Button } from '~/shared/ui'
 
 export const Route = createFileRoute('/samson')({
@@ -9,21 +9,7 @@ export const Route = createFileRoute('/samson')({
 })
 
 function SamsonPage() {
-  const query = useInfiniteQuery(() => ({
-    queryKey: ['samson/products'],
-    queryFn: async ({ pageParam, signal }) => {
-      console.log('quryFn', pageParam)
-      const res = await samson.api.getProducts({ pagination_page: pageParam }, signal)
-      const universalProducts = res.data.map((p) => samson.toUniversalProduct(p))
-      console.log('meta', res.meta)
-      return { data: universalProducts, meta: res.meta }
-    },
-    initialPageParam: 1,
-    getNextPageParam: (res) => {
-      console.log('getNextPageParam', res.meta.pagination.nextPage)
-      return res.meta.pagination.nextPage
-    },
-  }))
+  const query = useInfiniteQuery(() => samsonQueryOptions)
 
   createEffect(
     on(
@@ -42,6 +28,7 @@ function SamsonPage() {
       <Button variant="ghost" onclick={() => query.fetchNextPage()}>
         Button
       </Button>
+      <Link to="/">Home</Link>
 
       <pre>{String(query.error)}</pre>
 

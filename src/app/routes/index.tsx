@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/solid-router'
 import { Charset, Index, IndexedDB, Worker } from 'flexsearch'
 import { createMemo, createSignal, For } from 'solid-js'
+import { mockProducts } from '~/shared/__mocks__'
 import { Button, TextField, TextFieldInput } from '~/shared/ui/kit'
-import { mockProducts } from './config'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -39,6 +39,8 @@ function HomePage() {
       <header class="flex min-h-screen flex-col items-center bg-[#282c34] pt-20 text-sm text-white">
         <Link to="/komus">komus</Link>
         <Link to="/samson">samson</Link>
+        <Link to="/search">search</Link>
+
         <Button onClick={() => index.export()}>Export</Button>
 
         <TextField>

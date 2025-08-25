@@ -16,7 +16,7 @@ export const ProductPricesRegional = type({
   partnerPrice: 'number', // Цена партнера (с учетом ценовых условий партнера, но без учета доп. скидок) в рублях с округлением до 2-х знаков.
   rrcPrice: 'number', // Рекомендованная розничная цена для розничного магазина в рублях с округлением до 2-х знаков.
   pricePmc: 'number', // Порог минимальной цены для интернет магазина (ПМЦ) в рублях с округлением до 2-х знаков
-  modTime: 'string.date | null', // Изменение цен в формате full-date full-time "YYYY-MM-DD HH:MM:SS"
+  modTime: type('string.date | null').pipe(v => v === null ? undefined : v), // Изменение цен в формате full-date full-time "YYYY-MM-DD HH:MM:SS"
 })
 
 export type ProductPricesRegional = typeof ProductPricesRegional.infer
@@ -101,11 +101,11 @@ export const toUniversalProductTemplate = (product: Product): UniversalProductTe
   id: `komus:${product.artnumber}`,
   provider: 'komus',
   name: product.name,
-  description: null,
+  description: undefined,
   sku: product.artnumber.toString(),
   barcodes: [],
-  brand: null,
-  manifacturer: null,
+  brand: undefined,
+  manifacturer: undefined,
 })
 
 export const toUniversalProduct = (
@@ -129,8 +129,8 @@ export const GetProductsResponse = type({
     pagination: {
       totalCount: res.count,
       currentPage: res.page,
-      prevPage: res.prev,
-      nextPage: res.next,
+      prevPage: res.prev ?? undefined,
+      nextPage: res.next ?? undefined,
       totalPages: res.pages,
     },
   },

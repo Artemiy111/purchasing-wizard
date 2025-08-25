@@ -53,7 +53,7 @@ export const mockProducts: UniversalProduct[] = [
     manifacturer: 'Komus',
     sku: '1005',
     barcodes: ['4601234567894'],
-    prices: { retail: 70.0, partner: 55.0 },
+    prices: { retail: 70.0, partner: undefined },
     brand: 'TRTT',
   },
   {
