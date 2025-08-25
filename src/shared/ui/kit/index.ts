@@ -1,5 +1,6 @@
 export * from './button'
 export * from './checkbox'
 export * from './dialog'
+export * from './loader'
 export * from './table'
 export * from './text-field'
