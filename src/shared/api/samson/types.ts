@@ -3,7 +3,7 @@ import type { UniversalProduct } from '../universal'
 
 export const GetProductsRequest = type({
   pageIndex: 'number = 0',
-  pageSize: 'number.integer <= 1000 = 1000',
+  pageSize: 'number.integer <= 10000 = 10000',
 })
   .pipe((data) => {
     const { pageIndex, pageSize, ...rest } = data
@@ -15,8 +15,8 @@ export const GetProductsRequest = type({
   })
   .to({
     response_format: '"json" | "xml" = "json"',
-    pagination_count: 'number.integer <= 10000 = 10000',
-    pagination_page: 'number.integer = 1',
+    pagination_count: 'number.integer',
+    pagination_page: 'number.integer',
     'sort_type?': '"price" | "date" | "name" | "popularity"',
     photo_size: '"s" | "x" = "s"',
     'brand?': 'string[]',
@@ -124,12 +124,12 @@ export const toUniversalProduct = (product: Product): UniversalProduct => ({
   image: product.photo_list[0],
 })
 
-const getPaginationPage = (url: string) => {
+const getPaginationPageIndex = (url: string) => {
   const params = new URLSearchParams(new URL(url).search)
   const param = 'pagination_page'
-  console.log(params, params.has(param), params.get(param))
   const page = params.has(param) ? parseInt(params.get(param)!, 10) : undefined
-  return page
+  const index = page === undefined ? undefined : page - 1
+  return index
 }
 
 export const GetProductsResponse = type({
@@ -139,8 +139,8 @@ export const GetProductsResponse = type({
       'previous?': 'string.url',
       'next?': 'string.url',
     }).pipe((p) => ({
-      prevPage: p.previous ? getPaginationPage(p.previous) : undefined,
-      nextPage: p.next ? getPaginationPage(p.next) : undefined,
+      prevPageIndex: p.previous ? getPaginationPageIndex(p.previous) : undefined,
+      nextPageIndex: p.next ? getPaginationPageIndex(p.next) : undefined,
     })),
   },
 })

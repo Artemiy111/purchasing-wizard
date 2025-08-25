@@ -144,8 +144,8 @@ export const GetProductsResponse = type({
     pagination: {
       totalCount: res.count,
       currentPage: res.page,
-      prevPage: res.prev ?? undefined,
-      nextPage: res.next ?? undefined,
+      prevPageIndex: res.prev === null ? undefined : res.prev - 1,
+      nextPageIndex: res.next === null ? undefined : res.next - 1,
       totalPages: res.pages,
     },
   },
