@@ -1,5 +1,3 @@
-import { type } from 'arktype'
-
 import { ofetch } from 'ofetch'
 import * as t from './types'
 
@@ -12,19 +10,27 @@ const $fetch = ofetch.create({
 })
 
 export const api = {
+  async getUniversalProducts(params: t.GetProductsRequest, signal?: AbortSignal) {
+    const res = await this.getProducts(params, signal)
+    const products = res.data.map((product) => t.toUniversalProduct(product))
+    return { data: products, meta: res.meta }
+  },
+
   /**
    * @see https://api.samsonopt.ru/v1/doc/index.html#tag/Tovary/paths/~1sku/get
    */
-  getProducts: async (params_: t.GetProductsRequest) => {
-    const params = t.GetProductsRequest(params_)
+  getProducts: async (params_: t.GetProductsRequest, signal?: AbortSignal) => {
+    const params = t.GetProductsRequest.from(params_)
 
-    if (params instanceof type.errors) throw params.toTraversalError()
-
-    const res = await $fetch('/sku', { params })
-    return res as t.GetProductsResponse
-    // const validated = t.GetProductsResponse(res)
-
-    // if (validated instanceof type.errors) throw validated.toTraversalError()
-    // return validated
+    try {
+      const res = await $fetch('/sku', { params, signal })
+      console.log(res)
+      const validated = t.GetProductsResponse.from(res)
+      console.log(validated)
+      return validated
+    } catch (error) {
+      console.error('FFF', error)
+      throw error
+    }
   },
 }

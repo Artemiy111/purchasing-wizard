@@ -1,10 +1,12 @@
 import { ColorModeProvider, ColorModeScript, createLocalStorageManager } from '@kobalte/core'
+import { QueryClientProvider } from '@tanstack/solid-query'
+import { SolidQueryDevtools } from '@tanstack/solid-query-devtools'
 import { createRouter, RouterProvider } from '@tanstack/solid-router'
 import { render } from 'solid-js/web'
+
 import { routeTree } from '~/routeTree.gen'
 import '~/shared/assets/css/main.css'
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query'
-import { SolidQueryDevtools } from '@tanstack/solid-query-devtools'
+import { queryClient } from './query-client'
 
 const router = createRouter({
   routeTree,
@@ -19,15 +21,6 @@ declare module '@tanstack/solid-router' {
   }
 }
 
-const qc = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-})
-
 function App() {
   const storageManager = createLocalStorageManager('ui-theme')
 
@@ -35,7 +28,7 @@ function App() {
     <>
       <ColorModeScript storageType={storageManager.type} />
       <ColorModeProvider storageManager={storageManager}>
-        <QueryClientProvider client={qc}>
+        <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
           <SolidQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>

@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import autoImport from 'unplugin-auto-import/vite'
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 
@@ -14,6 +15,11 @@ export default defineConfig({
     }),
     solid({}),
     tailwindcss(),
+    // autoImport({
+    //   include: /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
+    //   dts: './auto-imports.d.ts',
+    //   imports: ['solid-js'],
+    // }),
   ],
   resolve: {
     alias: {

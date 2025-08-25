@@ -14,6 +14,7 @@
   "dependencies": {
     "@kobalte/core": "^0.13.11",
     "@kobalte/tailwindcss": "^0.9.0",
+    "@orama/orama": "^3.1.11",
     "@tailwindcss/vite": "^4.1.12",
     "@tanstack/router-plugin": "^1.131.27",
     "@tanstack/solid-query": "^5.85.5",
@@ -23,12 +24,16 @@
     "@tanstack/solid-table": "^8.21.3",
     "arktype": "^2.1.20",
     "class-variance-authority": "^0.7.1",
+    "dexie": "^4.2.0",
+    "flexsearch": "^0.8.205",
+    "lucide-solid": "^0.541.0",
     "ofetch": "^1.4.1",
     "solid-js": "^1.9.9",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^2.1.0",
     "tailwindcss": "^4.1.12",
-    "tw-animate-css": "^1.3.7"
+    "tw-animate-css": "^1.3.7",
+    "unplugin-auto-import": "^20.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

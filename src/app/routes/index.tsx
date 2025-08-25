@@ -1,55 +1,53 @@
-import { useQuery } from '@tanstack/solid-query'
-import { createFileRoute } from '@tanstack/solid-router'
-import { For, Suspense } from 'solid-js'
-import logo from '~/logo.svg'
-import { samson } from '~/shared/api'
-import { Button } from '~/shared/ui'
+import { createFileRoute, Link } from '@tanstack/solid-router'
+import { Charset, Index, IndexedDB, Worker } from 'flexsearch'
+import { createMemo, createSignal, For } from 'solid-js'
+import { mockProducts } from '~/shared/__mocks__'
+import { Button, TextField, TextFieldInput } from '~/shared/ui/kit'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
 })
 
+const index = new Index({
+  tokenize: 'forward',
+  fastupdate: true,
+  encoder: Charset.LatinBalance,
+  cache: 100,
+})
+
+const [products] = createSignal(mockProducts)
+
+for (const item of products()) {
+  index.add(item.id, item.name)
+}
+
 function HomePage() {
-  const query = useQuery(() => ({
-    queryKey: ['products'],
-    queryFn: () => samson.api.getProducts({}),
-    refetchOnMount: false,
-  }))
+  const [search, setSearch] = createSignal('')
+
+  const result = createMemo(() => {
+    if (!search()) return products()
+    const ids = index.search(search(), {
+      suggest: true,
+      limit: 10,
+    })
+    const res = ids.map((id) => products().find((item) => item.id === id)!)
+    return res
+  })
 
   return (
     <div class="text-center">
-      <header class="flex min-h-screen flex-col items-center justify-center bg-[#282c34] text-[calc(10px+2vmin)] text-white">
-        <img
-          src={logo}
-          class="pointer-events-none h-[40vmin] animate-[spin_20s_linear_infinite]"
-          alt="logo"
-        />
-        <p></p>
-        <a
-          class="text-[#61dafb] hover:underline"
-          href="https://solidjs.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Solid
-        </a>
-        <a
-          class="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn TanStack
-        </a>
-        <a href="/about">about</a>
+      <header class="flex min-h-screen flex-col items-center bg-[#282c34] pt-20 text-sm text-white">
+        <Link to="/komus">komus</Link>
+        <Link to="/samson">samson</Link>
+        <Link to="/search">search</Link>
 
-        <Button variant="ghost" onclick={() => samson.api.getProducts({})}>
-          Button
-        </Button>
+        <Button onClick={() => index.export()}>Export</Button>
 
-        <Suspense>
-          <For each={query.data}>{(item) => <pre>{JSON.stringify(item, null, 2)}</pre>}</For>
-        </Suspense>
+        <TextField>
+          <TextFieldInput value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
+        </TextField>
+
+        <For each={result()}>{(item) => <div>{item.name}</div>}</For>
       </header>
     </div>
   )
