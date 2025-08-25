@@ -1,28 +1,30 @@
 import { infiniteQueryOptions } from '@tanstack/solid-query'
 import { komus, samson } from '~/shared/api'
+import { db } from '~/shared/lib/db'
 
 export const komusQueryOptions = infiniteQueryOptions({
-  queryKey: ['komus/products'],
+  queryKey: ['products/komus'],
   queryFn: async ({ pageParam, signal }) => {
-    console.log('quryFn lomus', pageParam)
     return await komus.api.getUniversalProducts({ pageIndex: pageParam }, signal)
   },
   initialPageParam: 0,
   getNextPageParam: (res) => {
-    console.log('getNextPageParam', res.meta.pagination.nextPage)
-    return res.meta.pagination.nextPage
+    return res.meta.pagination.nextPageIndex
   },
 })
 
 export const samsonQueryOptions = infiniteQueryOptions({
-  queryKey: ['samson/products'],
+  queryKey: ['products/samson'],
   queryFn: async ({ pageParam, signal }) => {
-    console.log('quryFn lomus', pageParam)
-    return await samson.api.getUniversalProducts({ pageIndex: pageParam }, signal)
+    console.log('samson', pageParam)
+    const res = await samson.api.getUniversalProducts({ pageIndex: pageParam }, signal)
+    db.products.bulkAdd(res.data)
+
+    return res
   },
   initialPageParam: 0,
   getNextPageParam: (res) => {
-    console.log('getNextPageParam', res.meta.pagination.nextPage)
-    return res.meta.pagination.nextPage
+    console.log('getNextPageParam', res.meta.pagination.nextPageIndex)
+    return res.meta.pagination.nextPageIndex
   },
 })

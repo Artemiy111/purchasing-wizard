@@ -1,65 +1,44 @@
-import {
-  create,
-  getByID,
-  type InternalTypedDocument,
-  insert,
-  insertMultiple,
-  type Result,
-  search as searchOrama,
-} from '@orama/orama'
-import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/solid-query'
+import { create, getByID, insert, search as searchOrama } from '@orama/orama'
+import { useMutation, useQuery } from '@tanstack/solid-query'
 import { createFileRoute } from '@tanstack/solid-router'
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  Index,
-  Match,
-  on,
-  onMount,
-  Show,
-  Suspense,
-  Switch,
-} from 'solid-js'
-import { mockProductsToSearch, type ProductToSearch } from '~/shared/__mocks__'
-import type { UniversalProduct } from '~/shared/api'
+import { createEffect, createSignal, For, Index, Match, on, onMount, Switch } from 'solid-js'
+import { mockProductsToSearch } from '~/shared/__mocks__'
 import { db } from '~/shared/lib/db'
-import { samsonQueryOptions } from '~/shared/model/products'
 import {
   Button,
+  Loader,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TextField,
-  TextFieldInput,
 } from '~/shared/ui'
 
 export const Route = createFileRoute('/search')({
   component: SearchPage,
 })
 
-const orama = create({
-  schema: {
-    id: 'string',
-    // provider: 'string',
-    name: 'string',
-    description: 'string',
-    // prices: {
-    //   retail: 'number',
-    //   partner: 'number',
-    // },
-    // brand: 'string',
-    // barcodes: 'string[]',
-  },
-  language: 'russian',
-  sort: {
-    enabled: true,
-  },
-})
+const orama =
+  // ? await restore('binary', persistedOrama.data, 'browser')
+  create({
+    schema: {
+      id: 'string',
+      // provider: 'string',
+      name: 'string',
+      description: 'string',
+      // prices: {
+      //   retail: 'number',
+      //   partner: 'number',
+      // },
+      // brand: 'string',
+      // barcodes: 'string[]',
+    },
+    language: 'russian',
+    sort: {
+      enabled: true,
+    },
+  })
 
 function SearchPage() {
   const [productsToSearch, setProductsToSearch] = createSignal(mockProductsToSearch)
@@ -82,8 +61,15 @@ function SearchPage() {
       // } catch {}
 
       for (let i = 0; i < products.length; i++) {
-        if (!getByID(orama, products[i].id)) await insert(orama, products[i])
-        if (i % 100 === 0) {
+        const product = products[i]
+
+        if (!getByID(orama, products[i].id))
+          await insert(orama, {
+            id: product.id,
+            name: product.name,
+            description: product.description,
+          })
+        if (i % 500 === 0) {
           await new Promise((r) => setTimeout(r))
         }
       }
@@ -99,6 +85,9 @@ function SearchPage() {
             term: product.name,
             properties: ['name', 'description'],
             limit: 5,
+            boost: {
+              name: 2,
+            },
           })
 
           const searched = await db.products
@@ -145,11 +134,11 @@ function SearchPage() {
         {indexProducts.isPending ? 'Индексируем...' : 'Проиндексировано'}
 
         <Button disabled={indexProducts.isPending} onClick={() => indexProducts.mutate()}>
-          Проиндексировать {indexProducts.isPending ? '...' : '🚀'}
+          Проиндексировать {indexProducts.isPending && <Loader />}
         </Button>
 
         <Button disabled={searchProducts.isPending} onClick={() => searchProducts.mutate()}>
-          Найти {searchProducts.isPending ? '...' : '🚀'}
+          Найти {searchProducts.isPending && <Loader />}
         </Button>
       </div>
 
@@ -202,13 +191,13 @@ function SearchPage() {
                   <Match when={searchProducts.data && searchProducts.data[item().name]?.length > 0}>
                     <TableRow>
                       <TableCell colspan={2}>
-                        <Table>
+                        <Table class="overflow-scroll">
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Id</TableHead>
+                              <TableHead></TableHead>
                               <TableHead>Поставщик</TableHead>
-                              <TableHead class="w-full">Название</TableHead>
-                              <TableHead>Описание</TableHead>
+                              <TableHead class="min-w-40">Название</TableHead>
+                              <TableHead class="w-full">Описание</TableHead>
                               <TableHead class="w-max text-nowrap">
                                 Цена розничная &nbsp;Р
                               </TableHead>
@@ -222,7 +211,13 @@ function SearchPage() {
                             <For each={searchProducts.data![item().name]}>
                               {(item) => (
                                 <TableRow>
-                                  <TableHead>{item.id}</TableHead>
+                                  <TableCell>
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      class="aspect-square w-25 object-contain"
+                                    />
+                                  </TableCell>
                                   <TableCell>{item.provider}</TableCell>
                                   <TableCell>{item.name}</TableCell>
                                   <TableCell>{item.description}</TableCell>
