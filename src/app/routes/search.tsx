@@ -194,10 +194,12 @@ function SearchPage() {
                         <Table class="overflow-scroll">
                           <TableHeader>
                             <TableRow>
-                              <TableHead></TableHead>
+                              <TableHead class="min-w-25"></TableHead>
                               <TableHead>Поставщик</TableHead>
                               <TableHead class="min-w-40">Название</TableHead>
                               <TableHead class="w-full">Описание</TableHead>
+                              <TableHead class="">Артикул</TableHead>
+                              <TableHead class="">Штрихкод(ы)</TableHead>
                               <TableHead class="w-max text-nowrap">
                                 Цена розничная &nbsp;Р
                               </TableHead>
@@ -215,12 +217,14 @@ function SearchPage() {
                                     <img
                                       src={item.image}
                                       alt={item.name}
-                                      class="aspect-square w-25 object-contain"
+                                      class="aspect-square w-full object-contain"
                                     />
                                   </TableCell>
                                   <TableCell>{item.provider}</TableCell>
                                   <TableCell>{item.name}</TableCell>
                                   <TableCell>{item.description}</TableCell>
+                                  <TableCell>{item.sku}</TableCell>
+                                  <TableCell>{item.barcodes.join(', ')}</TableCell>
                                   <TableCell>{item.prices.retail}</TableCell>
                                   <TableCell>{item.prices.partner}</TableCell>
                                   <TableCell>{item.stock}</TableCell>
