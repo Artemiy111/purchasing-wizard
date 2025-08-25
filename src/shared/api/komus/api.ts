@@ -20,34 +20,40 @@ export const api = {
     const MAX_COUNT = 250
     const products = res.data.map((product) => t.toUniversalProductTemplate(product))
 
-    // const productsMap = new Map(products.map((product) => [product.sku, product]))
+    const productsMap = new Map(products.map((product) => [product.sku, product]))
 
     for (let i = 0; i < res.data.length; i += MAX_COUNT) {
       const artnumbers = res.data.slice(i, i + MAX_COUNT).map((item) => item.artnumber)
 
-      const pricesRes = await this.getProductsPrices({ artnumbers }, signal)
-      const stocksRes = await this.getProductsStock({ artnumbers }, signal)
-      const propertiesRes = await this.getProductsProperties({ artnumbers }, signal)
+      const pricesPromise = this.getProductsPrices({ artnumbers }, signal)
+      const stocksPromise = this.getProductsStock({ artnumbers }, signal)
+      const propertiesPromise = this.getProductsProperties({ artnumbers }, signal)
+
+      const [pricesRes, stocksRes, propertiesRes] = await Promise.all([
+        pricesPromise,
+        stocksPromise,
+        propertiesPromise,
+      ])
 
       for (const prices of Object.values(pricesRes.content)) {
-        const idx = res.data.findIndex((product) => product.artnumber === prices.artnumber)
-        if (idx !== -1) {
-          products[idx] = t.toUniversalProduct(products[idx], prices)
+        const product = productsMap.get(prices.artnumber.toString())
+        if (product) {
+          product.prices = t.toUniversalPrices(prices)
         }
       }
 
       for (const stocks of Object.values(stocksRes.content)) {
-        const idx = res.data.findIndex((product) => product.artnumber === stocks.artnumber)
-        if (idx !== -1) {
-          products[idx].stock = stocks.stock[0]!.quantity
+        const product = productsMap.get(stocks.artnumber.toString())
+        if (product) {
+          product.stock = stocks.stock[0]!.quantity
         }
       }
 
       for (const properties of Object.values(propertiesRes.content)) {
-        const idx = res.data.findIndex((product) => product.artnumber === properties.artnumber)
-        if (idx !== -1) {
-          products[idx].description = properties.description
-          products[idx].barcodes = properties.barcodes
+        const product = productsMap.get(properties.artnumber.toString())
+        if (product) {
+          product.description = properties.description
+          product.barcodes = properties.barcodes
         }
       }
     }
@@ -85,15 +91,13 @@ export const api = {
     const body = t.GetProductsStocksRequest.from(body_)
 
     const res = await $fetch('/stock', { method: 'POST', body, signal })
-    console.log('stock', res)
     const validated = t.GetProductsStocksResponse.from(res)
-    console.log(validated)
     return validated
   },
 
   getProductsProperties: async (body_: t.GetProductsStocksRequest, signal?: AbortSignal) => {
     const body = t.GetProductsStocksRequest.from(body_)
-    const params = t.GetProductsPricesRequestParams.from({})
+    const params = t.GetProductsPropertiesRequestParams.from({})
 
     const res = await $fetch('/props', { method: 'POST', body, params, signal })
     const validated = t.GetProductsPropertiesResponse.from(res)
