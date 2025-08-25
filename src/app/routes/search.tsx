@@ -3,6 +3,8 @@ import { useMutation, useQuery } from '@tanstack/solid-query'
 import { createFileRoute } from '@tanstack/solid-router'
 import { createEffect, createSignal, For, Index, Match, on, onMount, Switch } from 'solid-js'
 import { mockProductsToSearch } from '~/shared/__mocks__'
+import type { UniversalProduct } from '~/shared/api'
+import { cn } from '~/shared/lib'
 import { db } from '~/shared/lib/db'
 import {
   Button,
@@ -103,6 +105,48 @@ function SearchPage() {
     },
   }))
 
+  const getAllIntersectingSku = async () => {
+    const record: Record<string, UniversalProduct[]> = {}
+
+    const data = await db.products.toArray()
+    for (const product of data) {
+      if (!record[product.sku]) {
+        record[product.sku] = []
+      }
+      record[product.sku].push(product)
+    }
+
+    for (const sku in record) {
+      if (record[sku].length === 1) {
+        delete record[sku]
+      }
+    }
+
+    console.log('sku', record)
+  }
+
+  const getAllIntersectingBarcodes = async () => {
+    const record: Record<string, UniversalProduct[]> = {}
+
+    const data = await db.products.toArray()
+    for (const product of data) {
+      for (const barcode of product.barcodes) {
+        if (!record[barcode]) {
+          record[barcode] = []
+        }
+        record[barcode].push(product)
+      }
+    }
+
+    for (const barcode in record) {
+      if (record[barcode].length === 1) {
+        delete record[barcode]
+      }
+    }
+
+    console.log('barcodes', record)
+  }
+
   onMount(async () => {
     try {
       await productsQuery.refetch()
@@ -123,23 +167,22 @@ function SearchPage() {
 
   return (
     <main class="container mx-auto grid auto-rows-auto grid-cols-1 gap-y-10 pt-20">
-      <div class="flex gap-x-4">
-        {/* <TextField class="w-full">
-          <TextFieldInput
-            value={searchText()}
-            onInput={(e) => setSearch(e.currentTarget.value)}
-            placeholder="Искать"
-          />
-        </TextField> */}
-        {indexProducts.isPending ? 'Индексируем...' : 'Проиндексировано'}
-
+      <div class="flex items-center gap-x-4">
         <Button disabled={indexProducts.isPending} onClick={() => indexProducts.mutate()}>
           Проиндексировать {indexProducts.isPending && <Loader />}
         </Button>
 
-        <Button disabled={searchProducts.isPending} onClick={() => searchProducts.mutate()}>
+        <Button
+          disabled={!indexProducts.isSuccess || searchProducts.isPending}
+          onClick={() => searchProducts.mutate()}
+        >
           Найти {searchProducts.isPending && <Loader />}
         </Button>
+
+        <Button onClick={getAllIntersectingSku}>Sku</Button>
+        <Button onClick={getAllIntersectingBarcodes}>Barcodes</Button>
+
+        {indexProducts.isSuccess && <p>Проиндексировано</p>}
       </div>
 
       <div class="">
@@ -151,6 +194,7 @@ function SearchPage() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead class="w-10">№</TableHead>
             <TableHead>Название</TableHead>
             <TableHead class="w-50">Необходимое кол-во</TableHead>
           </TableRow>
@@ -160,6 +204,7 @@ function SearchPage() {
             {(item, idx) => (
               <>
                 <TableRow class="bg-secondary">
+                  <TableCell>{idx + 1}</TableCell>
                   <TableCell>
                     <input
                       class="w-full"
@@ -188,9 +233,10 @@ function SearchPage() {
                       <TableCell colspan={2}>Ничего не найдено</TableCell>
                     </TableRow>
                   </Match>
+
                   <Match when={searchProducts.data && searchProducts.data[item().name]?.length > 0}>
                     <TableRow>
-                      <TableCell colspan={2}>
+                      <TableCell colspan={3}>
                         <Table class="overflow-scroll">
                           <TableHeader>
                             <TableRow>
@@ -198,8 +244,8 @@ function SearchPage() {
                               <TableHead>Поставщик</TableHead>
                               <TableHead class="min-w-40">Название</TableHead>
                               <TableHead class="w-full">Описание</TableHead>
-                              <TableHead class="">Артикул</TableHead>
-                              <TableHead class="">Штрихкод(ы)</TableHead>
+                              <TableHead>Артикул</TableHead>
+                              <TableHead>Штрихкод(ы)</TableHead>
                               <TableHead class="w-max text-nowrap">
                                 Цена розничная &nbsp;Р
                               </TableHead>
@@ -211,23 +257,27 @@ function SearchPage() {
                           </TableHeader>
                           <TableBody>
                             <For each={searchProducts.data![item().name]}>
-                              {(item) => (
-                                <TableRow>
+                              {(searched) => (
+                                <TableRow
+                                  class={cn(searched.stock < item().needCount && 'bg-error')}
+                                >
                                   <TableCell>
                                     <img
-                                      src={item.image}
-                                      alt={item.name}
+                                      src={searched.image}
+                                      alt={searched.name}
                                       class="aspect-square w-full object-contain"
                                     />
                                   </TableCell>
-                                  <TableCell>{item.provider}</TableCell>
-                                  <TableCell>{item.name}</TableCell>
-                                  <TableCell>{item.description}</TableCell>
-                                  <TableCell>{item.sku}</TableCell>
-                                  <TableCell>{item.barcodes.join(', ')}</TableCell>
-                                  <TableCell>{item.prices.retail}</TableCell>
-                                  <TableCell>{item.prices.partner}</TableCell>
-                                  <TableCell>{item.stock}</TableCell>
+                                  <TableCell>{searched.provider}</TableCell>
+                                  <TableCell>{searched.name}</TableCell>
+                                  <TableCell>{searched.description}</TableCell>
+                                  <TableCell>{searched.sku}</TableCell>
+                                  <TableCell class="font-mono">
+                                    {searched.barcodes.join(', ')}
+                                  </TableCell>
+                                  <TableCell>{searched.prices.retail}</TableCell>
+                                  <TableCell>{searched.prices.partner}</TableCell>
+                                  <TableCell>{searched.stock}</TableCell>
                                 </TableRow>
                               )}
                             </For>

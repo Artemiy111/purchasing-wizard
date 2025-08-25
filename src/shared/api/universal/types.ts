@@ -13,7 +13,7 @@ export const UniversalProduct = type({
   provider: '"komus" | "samson"',
   name: 'string',
   description: 'string | undefined',
-  sku: 'string | undefined',
+  sku: 'string',
   barcodes: 'string[]',
   prices: UniversalPrices,
   brand: 'string | undefined',

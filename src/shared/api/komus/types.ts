@@ -7,8 +7,6 @@ const Format = type({
 
 export const GetProductsPricesRequestParams = Format
 
-
-
 const ArtNumbers = type({
   artnumbers: '1 <= number.integer[] <= 250',
 })
@@ -141,27 +139,27 @@ export const Product = type({
 
 export type Product = typeof Product.inferOut
 
-type UniversalProductTemplate = Omit<UniversalProduct, 'prices'>
 
-export const toUniversalProductTemplate = (product: Product): UniversalProductTemplate => ({
+export const toUniversalProductTemplate = (product: Product): UniversalProduct => ({
   id: `komus:${product.artnumber}`,
   provider: 'komus',
   name: product.name,
   description: undefined,
   sku: product.artnumber.toString(),
+  prices: undefined!,
   barcodes: [],
   brand: undefined,
   stock: 0,
   image: product.image,
 })
 
-export const toUniversalProduct = (
-  productTemplate: UniversalProductTemplate,
-  prices: ProductPriceItem,
-): UniversalProduct => ({
-  ...productTemplate,
-  prices: toUniversalPrices(prices),
-})
+// export const toUniversalProduct = (
+//   productTemplate: UniversalProductTemplate,
+//   prices: ProductPriceItem,
+// ): UniversalProduct => ({
+//   ...productTemplate,
+//   prices: toUniversalPrices(prices),
+// })
 
 export const GetProductsResponse = type({
   content: Product.array(),
