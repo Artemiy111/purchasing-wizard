@@ -1,13 +1,19 @@
 import { type } from 'arktype'
 import type { UniversalPrices, UniversalProduct } from '../universal'
 
-export const GetProductsPricesRequestParams = type({
+const Format = type({
   format: '"json" | "xml" = "json"',
 })
 
-export const GetProductsPricesRequest = type({
+export const GetProductsPricesRequestParams = Format
+
+
+
+const ArtNumbers = type({
   artnumbers: '1 <= number.integer[] <= 250',
 })
+
+export const GetProductsPricesRequest = ArtNumbers
 
 export type GetProductsPricesRequest = typeof GetProductsPricesRequest.inferIn
 
@@ -51,9 +57,7 @@ export const toUniversalPrices = (price: ProductPriceItem): UniversalPrices => {
 
 export type GetProductsPricesResponse = typeof GetProductsPricesResponse.infer
 
-export const GetProductsStocksRequest = type({
-  artnumbers: '1 <= number.integer[] <= 250',
-})
+export const GetProductsStocksRequest = ArtNumbers
 
 export type GetProductsStocksRequest = typeof GetProductsStocksRequest.inferIn
 
@@ -78,6 +82,34 @@ export const GetProductsStocksResponse = type({
 
 export type GetProductsStocksResponse = typeof GetProductsStocksResponse.infer
 
+export const GetProductsPropertiesRequestParams = type({
+  '...': Format,
+  fields: 'string = "description,barcodes"',
+})
+
+export type GetProductsPropertiesRequestParams = typeof GetProductsPropertiesRequestParams.inferIn
+
+export const GetProductsPropertiesRequest = ArtNumbers
+
+export const ProductProperties = type({
+  artnumber: 'number.integer',
+  description: 'string',
+  barcodes: 'string[] | null'
+}).pipe((item) => {
+  const { barcodes, ...rest } = item
+  return { barcodes: barcodes ?? [], ...rest }
+})
+
+export const GetProductsPropertiesResponse = type({
+  'content': ProductProperties.array().pipe(arr => {
+    const entities = arr.map(item => [item.artnumber, item] as const)
+    return Object.fromEntries(entities)
+  }),
+  'artnumberLost?': 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
+})
+
+export type GetProductsPropertiesResponse = typeof GetProductsPropertiesResponse.infer
+
 export const GetProductsRequest = type({
   pageIndex: 'number = 0',
   pageSize: '1 <= number <= 1000 = 1000',
@@ -87,7 +119,7 @@ export const GetProductsRequest = type({
     limit: data.pageSize,
   }))
   .to({
-    format: '"json" | "xml" = "json"',
+    '...': Format,
     limit: '1 <= number <= 1000 = 1000',
     page: 'number = 1',
   })
@@ -104,7 +136,7 @@ export const Product = type({
   artnumber: 'number.integer', // Артикул товара
   categoryId: 'number.integer',
   name: 'string',
-  image: type('string').pipe((s) => `https://komus-opt.ru/${s}`),
+  image: type('string | null').pipe((s) => s === null ? undefined : `https://komus-opt.ru/${s}`),
 })
 
 export type Product = typeof Product.inferOut

@@ -5,7 +5,10 @@ import { db } from '~/shared/lib/db'
 export const komusQueryOptions = infiniteQueryOptions({
   queryKey: ['products/komus'],
   queryFn: async ({ pageParam, signal }) => {
-    return await komus.api.getUniversalProducts({ pageIndex: pageParam }, signal)
+    const res = await komus.api.getUniversalProducts({ pageIndex: pageParam }, signal)
+    db.products.bulkAdd(res.data)
+
+    return res
   },
   initialPageParam: 0,
   getNextPageParam: (res) => {
@@ -16,7 +19,6 @@ export const komusQueryOptions = infiniteQueryOptions({
 export const samsonQueryOptions = infiniteQueryOptions({
   queryKey: ['products/samson'],
   queryFn: async ({ pageParam, signal }) => {
-    console.log('samson', pageParam)
     const res = await samson.api.getUniversalProducts({ pageIndex: pageParam }, signal)
     db.products.bulkAdd(res.data)
 

@@ -20,23 +20,34 @@ export const api = {
     const MAX_COUNT = 250
     const products = res.data.map((product) => t.toUniversalProductTemplate(product))
 
+    // const productsMap = new Map(products.map((product) => [product.sku, product]))
+
     for (let i = 0; i < res.data.length; i += MAX_COUNT) {
       const artnumbers = res.data.slice(i, i + MAX_COUNT).map((item) => item.artnumber)
 
       const pricesRes = await this.getProductsPrices({ artnumbers }, signal)
       const stocksRes = await this.getProductsStock({ artnumbers }, signal)
+      const propertiesRes = await this.getProductsProperties({ artnumbers }, signal)
 
-      for (const [, prices] of Object.entries(pricesRes.content)) {
+      for (const prices of Object.values(pricesRes.content)) {
         const idx = res.data.findIndex((product) => product.artnumber === prices.artnumber)
         if (idx !== -1) {
           products[idx] = t.toUniversalProduct(products[idx], prices)
         }
       }
 
-      for (const [, stocks] of Object.entries(stocksRes.content)) {
+      for (const stocks of Object.values(stocksRes.content)) {
         const idx = res.data.findIndex((product) => product.artnumber === stocks.artnumber)
         if (idx !== -1) {
           products[idx].stock = stocks.stock[0]!.quantity
+        }
+      }
+
+      for (const properties of Object.values(propertiesRes.content)) {
+        const idx = res.data.findIndex((product) => product.artnumber === properties.artnumber)
+        if (idx !== -1) {
+          products[idx].description = properties.description
+          products[idx].barcodes = properties.barcodes
         }
       }
     }
@@ -79,4 +90,13 @@ export const api = {
     console.log(validated)
     return validated
   },
+
+  getProductsProperties: async (body_: t.GetProductsStocksRequest, signal?: AbortSignal) => {
+    const body = t.GetProductsStocksRequest.from(body_)
+    const params = t.GetProductsPricesRequestParams.from({})
+
+    const res = await $fetch('/props', { method: 'POST', body, params, signal })
+    const validated = t.GetProductsPropertiesResponse.from(res)
+    return validated
+  }
 }
