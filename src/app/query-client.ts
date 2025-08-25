@@ -2,7 +2,7 @@ import { experimental_createQueryPersister as createQueryPersister } from '@tans
 import { QueryClient } from '@tanstack/solid-query'
 import * as idb from 'idb-keyval'
 
-const persister = createQueryPersister({
+const _persister = createQueryPersister({
   storage: {
     getItem: idb.get,
     setItem: idb.set,

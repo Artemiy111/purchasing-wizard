@@ -1,5 +1,46 @@
 import type { UniversalProduct } from '~/shared/api'
 
+export type ProductToSearch = {
+  name: string
+  needCount: number
+}
+
+export const mockProductsToSearch: ProductToSearch[] = [
+  { name: "Порошок стиральный Автомат (Ariel Color, 15 кг)", needCount: 75 },
+  { name: "Гель для стирки черного белья Ariel Revitalblack, 1.04 л", needCount: 12 },
+  { name: "Кондиционер-ополаскиватель для белья Вернель «Свежий бриз», 1.82 л", needCount: 16 },
+  { name: "Мыло туалетное (банное)", needCount: 50 },
+  { name: "Мыло хозяйственное", needCount: 30 },
+  { name: "Жидкое крем-мыло Palila 500 мл аромат океана", needCount: 30 },
+  { name: "Vanish средство для ручной чистки для ковров, 450 мл", needCount: 18 },
+  { name: "Domestos Чистящее средство для унитаза, ультра белый антибактериальный эффект, 1500 мл", needCount: 6 },
+  { name: "Чистящее средство для ванной от известкового налета и ржавчины Cillit Bang, 750 мл", needCount: 18 },
+  { name: "Средство для прочистки труб от засоров «Bagi Потхан»", needCount: 12 },
+  { name: "Таблетки для посудомоечных машин, 100 шт/упаковка", needCount: 3 },
+  { name: "Средство для мытья посуды Fairy Сочный лимон, 1.35 л", needCount: 18 },
+  { name: "Освежитель воздуха Glade, 300 мл (в ассортименте)", needCount: 18 },
+  { name: "Mr Muscle средство для стекол и поверхностей, 530 мл", needCount: 8 },
+  { name: "Средство для чистки плит и духовок Laima Professional Антижир, 500 мл", needCount: 8 },
+  { name: "Зубочистки деревянные, 200 шт/упаковка", needCount: 10 },
+  { name: "Фольга пищевая 50 м прочная", needCount: 10 },
+  { name: "Пищевая пленка в рулоне плотная стрейч 30 см x 500 м", needCount: 5 },
+  { name: "Пакеты фасовочные 30x40 см, 12 мкм, 500 шт/упаковка", needCount: 3 },
+  { name: "Туалетная бумага 3-слойная, Papia", needCount: 192 },
+  { name: "Пакеты для мусора 35 л, 50 шт/рулон, 8–10 мкм", needCount: 50 },
+  { name: "Пакеты для мусора 120 л, 50 шт/рулон, 40–50 мкм", needCount: 30 },
+  { name: "Полотенце кухонное вафельное, цветное 40x60 см", needCount: 6 },
+  { name: "Полотенца бумажные Papia, белые, 3 слоя, 4 рулона/упаковка", needCount: 18 },
+  { name: "Бумажные полотенца Tork Advanced H3 290184, листовые, 2 слоя, белые, 200 шт/упаковка", needCount: 8 },
+  { name: "Салфетки бумажные (буфетные), 100 шт/упаковка", needCount: 60 },
+  { name: "Губка для мытья посуды, средняя", needCount: 25 },
+  { name: "Салфетка из микрофибры впитывающая, 30x30 см", needCount: 25 },
+  { name: "Перчатки латексные хозяйственные XL", needCount: 10 },
+  { name: "Перчатки нитриловые одноразовые, размер XL, 100 шт/упаковка", needCount: 3 },
+  { name: "Веник", needCount: 6 },
+  { name: "Совок со щеткой, для уборки помещений", needCount: 6 },
+  { name: "Фильтр водяной для кофемашины Delonghi Eletta Cappuccino", needCount: 2 },
+  { name: "Жидкость для очистки кофемашины Delonghi", needCount: 2 },
+]
 export const mockProducts: UniversalProduct[] = [
   {
     id: 'komus-1001',
