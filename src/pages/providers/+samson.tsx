@@ -27,14 +27,14 @@ export function SamsonPage() {
 
   return (
     <main>
-      <Button variant="ghost" onclick={() => query.fetchNextPage()}>
+      <Button onclick={() => query.fetchNextPage()} variant="ghost">
         Button
       </Button>
       <Link to="/">Home</Link>
 
       <ProviderStatus
-        title="Самсон"
         query={query}
+        title="Самсон"
         totalCount={totalCount()}
         totalPages={query.data?.pages.length}
       />

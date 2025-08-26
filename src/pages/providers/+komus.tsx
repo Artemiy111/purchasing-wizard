@@ -26,14 +26,14 @@ export function KomusPage() {
 
   return (
     <main>
-      <Button variant="ghost" onclick={() => query.fetchNextPage()}>
+      <Button onClick={() => query.fetchNextPage()} variant="ghost">
         Button
       </Button>
       <Link to="/">Home</Link>
 
       <ProviderStatus
-        title="Комус"
         query={query}
+        title="Комус"
         totalCount={totalCount()}
         totalPages={query.data?.pages.length}
       />

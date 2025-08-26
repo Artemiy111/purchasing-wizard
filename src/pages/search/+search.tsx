@@ -203,7 +203,6 @@ export function SearchPage() {
                   <TableCell>
                     <input
                       class="w-full"
-                      value={item().name}
                       onChange={(e) =>
                         setProductsToSearch((prev) =>
                           prev.map((item, i) =>
@@ -211,6 +210,7 @@ export function SearchPage() {
                           ),
                         )
                       }
+                      value={item().name}
                     />
                   </TableCell>
                   <TableCell>{item().needCount}</TableCell>
@@ -258,9 +258,9 @@ export function SearchPage() {
                                 >
                                   <TableCell>
                                     <img
-                                      src={searched.image}
                                       alt={searched.name}
                                       class="aspect-square w-full object-contain"
+                                      src={searched.image}
                                     />
                                   </TableCell>
                                   <TableCell>{searched.provider}</TableCell>

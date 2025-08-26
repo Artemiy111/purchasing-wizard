@@ -33,7 +33,7 @@ export function HomePage() {
   return (
     <div class="container mx-auto">
       <TextField>
-        <TextFieldInput value={search()} onInput={(e) => setSearch(e.currentTarget.value)} />
+        <TextFieldInput onInput={(e) => setSearch(e.currentTarget.value)} value={search()} />
       </TextField>
 
       <For each={result()}>{(item) => <div>{item.name}</div>}</For>
