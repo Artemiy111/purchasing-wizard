@@ -102,5 +102,5 @@ export const api = {
     const res = await $fetch('/props', { method: 'POST', body, params, signal })
     const validated = t.GetProductsPropertiesResponse.from(res)
     return validated
-  }
+  },
 }
