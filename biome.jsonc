@@ -18,8 +18,15 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "performance": {
+        "useSolidForComponent": "error"
+      },
       "nursery": {
-        "recommended": true,
+        "noMisusedPromises": "error",
+        "useConsistentTypeDefinitions": "error",
+        "noSecrets": "error",
+        "noShadow": "info",
+        "noFloatingPromises": "error",
         "useSortedClasses": {
           "level": "error",
           "fix": "safe",
