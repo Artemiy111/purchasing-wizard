@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/solid-query'
 import { Link } from '@tanstack/solid-router'
+import { createEffect, createMemo, on } from 'solid-js'
 import { komusQueryOptions } from '~/shared/model/products'
 import { Button, ProviderStatus } from '~/shared/ui'
 
