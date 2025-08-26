@@ -1,4 +1,4 @@
-import { experimental_createQueryPersister as createQueryPersister } from '@tanstack/query-persist-client-core'
+// import { experimental_createQueryPersister as createQueryPersister } from '@tanstack/query-persist-client-core'
 import { QueryClient } from '@tanstack/solid-query'
 
 // const _persister = createQueryPersister({

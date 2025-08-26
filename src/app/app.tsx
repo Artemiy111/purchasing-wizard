@@ -6,7 +6,7 @@ import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
 import { render } from 'solid-js/web'
 
 import '~/shared/assets/css/main.css'
-import { queryClient } from './query-client'
+import { queryClient } from '~/shared/lib/query-client'
 import { router } from './router'
 
 function App() {
