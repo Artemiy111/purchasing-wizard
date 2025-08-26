@@ -92,15 +92,15 @@ export const GetProductsPropertiesRequest = ArtNumbers
 export const ProductProperties = type({
   artnumber: 'number.integer',
   description: 'string',
-  barcodes: 'string[] | null'
+  barcodes: 'string[] | null',
 }).pipe((item) => {
   const { barcodes, ...rest } = item
   return { barcodes: barcodes ?? [], ...rest }
 })
 
 export const GetProductsPropertiesResponse = type({
-  'content': ProductProperties.array().pipe(arr => {
-    const entities = arr.map(item => [item.artnumber, item] as const)
+  content: ProductProperties.array().pipe((arr) => {
+    const entities = arr.map((item) => [item.artnumber, item] as const)
     return Object.fromEntries(entities)
   }),
   'artnumberLost?': 'number.integer[]', // Массив не найденных или не доступных пользователю артикулов
@@ -134,11 +134,10 @@ export const Product = type({
   artnumber: 'number.integer', // Артикул товара
   categoryId: 'number.integer',
   name: 'string',
-  image: type('string | null').pipe((s) => s === null ? undefined : `https://komus-opt.ru/${s}`),
+  image: type('string | null').pipe((s) => (s === null ? undefined : `https://komus-opt.ru/${s}`)),
 })
 
 export type Product = typeof Product.inferOut
-
 
 export const toUniversalProductTemplate = (product: Product): UniversalProduct => ({
   id: `komus:${product.artnumber}`,

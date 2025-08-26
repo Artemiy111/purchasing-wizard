@@ -12,8 +12,9 @@ export default defineConfig({
       routesDirectory: 'src/app/routes',
       target: 'solid',
       autoCodeSplitting: true,
+      generatedRouteTree: 'src/app/route-tree.gen.ts',
     }),
-    solid({}),
+    solid(),
     tailwindcss(),
     // autoImport({
     //   include: /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx

@@ -8,12 +8,11 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './app/routes/__root'
-import { Route as SearchRouteImport } from './app/routes/search'
-import { Route as SamsonRouteImport } from './app/routes/samson'
-import { Route as KomusRouteImport } from './app/routes/komus'
-import { Route as AboutRouteImport } from './app/routes/about'
-import { Route as IndexRouteImport } from './app/routes/index'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SamsonRouteImport } from './routes/samson'
+import { Route as KomusRouteImport } from './routes/komus'
+import { Route as IndexRouteImport } from './routes/index'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -30,11 +29,6 @@ const KomusRoute = KomusRouteImport.update({
   path: '/komus',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,14 +37,12 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/komus': typeof KomusRoute
   '/samson': typeof SamsonRoute
   '/search': typeof SearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/komus': typeof KomusRoute
   '/samson': typeof SamsonRoute
   '/search': typeof SearchRoute
@@ -58,22 +50,20 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
   '/komus': typeof KomusRoute
   '/samson': typeof SamsonRoute
   '/search': typeof SearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/komus' | '/samson' | '/search'
+  fullPaths: '/' | '/komus' | '/samson' | '/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/komus' | '/samson' | '/search'
-  id: '__root__' | '/' | '/about' | '/komus' | '/samson' | '/search'
+  to: '/' | '/komus' | '/samson' | '/search'
+  id: '__root__' | '/' | '/komus' | '/samson' | '/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
   KomusRoute: typeof KomusRoute
   SamsonRoute: typeof SamsonRoute
   SearchRoute: typeof SearchRoute
@@ -102,13 +92,6 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof KomusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -121,7 +104,6 @@ declare module '@tanstack/solid-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
   KomusRoute: KomusRoute,
   SamsonRoute: SamsonRoute,
   SearchRoute: SearchRoute,
