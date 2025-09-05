@@ -1,11 +1,7 @@
 import type { UniversalProduct } from '~/shared/api'
+import type { SearchingProduct } from '~/shared/types'
 
-export type ProductToSearch = {
-  name: string
-  needCount: number
-}
-
-export const mockProductsToSearch: ProductToSearch[] = [
+export const mockSearchingProducts: SearchingProduct[] = [
   { name: 'Порошок стиральный Автомат (Ariel Color, 15 кг)', needCount: 75 },
   { name: 'Гель для стирки черного белья Ariel Revitalblack, 1.04 л', needCount: 12 },
   { name: 'Кондиционер-ополаскиватель для белья Вернель «Свежий бриз», 1.82 л', needCount: 16 },
