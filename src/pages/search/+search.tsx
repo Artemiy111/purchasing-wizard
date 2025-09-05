@@ -1,21 +1,28 @@
-import { create, getByID, insert, search as searchOrama } from '@orama/orama'
-import { useMutation, useQuery } from '@tanstack/solid-query'
+import { queryOptions, useMutation, useQuery } from '@tanstack/solid-query'
 import {
   type Accessor,
   createEffect,
+  createMemo,
   createSignal,
   For,
   Index,
   Match,
   on,
-  onMount,
   Switch,
 } from 'solid-js'
-import { mockProductsToSearch, type ProductToSearch } from '~/shared/__mocks__'
-import type { UniversalProduct } from '~/shared/api'
-import { cn } from '~/shared/lib'
-import { db } from '~/shared/lib/db'
+import { unwrap } from 'solid-js/store'
+import { mockSearchingProducts } from '~/shared/__mocks__'
+import type { UniversalProduct, UniversalProvider } from '~/shared/api'
 import {
+  cn,
+  db,
+  PROVIDERS_LABELS,
+  searchProductsInIndex,
+  upsertProductsInIndex,
+} from '~/shared/lib'
+import type { SearchedProduct, SearchingProduct } from '~/shared/types'
+import {
+  Badge,
   Button,
   Loader,
   Table,
@@ -26,146 +33,181 @@ import {
   TableRow,
 } from '~/shared/ui'
 
-const orama = create({
-  schema: {
-    id: 'string',
-    // provider: 'string',
-    name: 'string',
-    description: 'string',
-    // prices: {
-    //   retail: 'number',
-    //   partner: 'number',
-    // },
-    // brand: 'string',
-    // barcodes: 'string[]',
-  },
-  language: 'russian',
-  sort: {
-    enabled: true,
-  },
-})
+type Barcode = string
+type SearchingProductName = string
+
+const getAllMatchingProductsByBarcodes = (products: UniversalProduct[]) => {
+  const record: Partial<Record<Barcode, UniversalProduct[]>> = {}
+
+  for (const product of products) {
+    for (const barcode of product.barcodes) {
+      if (!record[barcode]) {
+        record[barcode] = []
+      }
+      record[barcode].push(product)
+    }
+  }
+
+  for (const barcode in record) {
+    if (record[barcode]!.length === 1) {
+      delete record[barcode]
+    }
+  }
+  return record
+}
 
 const useIndexProducts = (products: Accessor<UniversalProduct[] | undefined>) => {
   return useMutation(() => ({
     mutationKey: ['index', products],
-    mutationFn: async () => {
-      const products_ = products()
-      if (!products_) return
-
-      // try {
-      //   await insertMultiple(db, products, 50)
-      // } catch {}
-
-      for (let i = 0; i < products_.length; i++) {
-        const product = products_[i]
-
-        if (!getByID(orama, products_[i].id))
-          await insert(orama, {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-          })
-        if (i % 500 === 0) {
-          await new Promise((r) => setTimeout(r))
-        }
-      }
-    },
+    mutationFn: () => upsertProductsInIndex(products()),
   }))
 }
 
-const useSearchProducts = (productsToSearch: Accessor<ProductToSearch[]>) => {
-  return useMutation(() => ({
-    mutationKey: ['search'],
-    mutationFn: async () => {
-      const entities = await Promise.all(
-        productsToSearch().map(async (product) => {
-          const res = await searchOrama(orama, {
-            term: product.name,
-            properties: ['name', 'description'],
-            limit: 5,
-            boost: {
-              name: 2,
-            },
-          })
+const searchProductsWithMatchingBarcodes = (
+  searchedProducts: UniversalProduct[],
+  allMatchingProductsByBarcodes: Partial<Record<Barcode, UniversalProduct[]>>,
+) => {
+  return searchedProducts.flatMap((searchedProduct) => {
+    const result: SearchedProduct[] = [{ ...searchedProduct, type: 'original' }]
 
-          const searched = await db.products
-            .filter((product) => res.hits.map((item) => item.id).includes(product.id))
-            .sortBy('prices.retail')
+    for (const barcode of searchedProduct.barcodes) {
+      const matchingProducts = allMatchingProductsByBarcodes[barcode] ?? []
 
-          return [product.name, searched] as const
-        }),
-      )
+      for (const matchedProduct of matchingProducts) {
+        if (
+          matchedProduct.id !== searchedProduct.id &&
+          !result.find((item) => item.id === matchedProduct.id)
+        ) {
+          const matched = { ...matchedProduct, type: 'matching-barcodes' as const }
+          result.push(matched)
+        }
+      }
+    }
 
-      const res = Object.fromEntries(entities)
+    return result
+  })
+}
+
+const searchProducts = async (
+  searchingProducts: SearchingProduct[],
+  allMatchingProductsByBarcodes: Partial<Record<Barcode, UniversalProduct[]>>,
+) => {
+  const promises = searchingProducts.map(async (searchingProduct, idx) => {
+    const searchedIndex = await searchProductsInIndex(searchingProduct)
+    console.log('searchedIndex', searchedIndex.hits)
+
+    const searchedProducts = await db.products
+      .filter((product) => searchedIndex.hits.map((item) => item.id).includes(product.id))
+      .sortBy('prices.retail')
+
+    const searchedProductsWithMatchingBarcodes = searchProductsWithMatchingBarcodes(
+      searchedProducts,
+      allMatchingProductsByBarcodes,
+    )
+
+    searchedProductsWithMatchingBarcodes.sort((a, b) => {
+      const aGroupByCount = a.stock >= searchingProduct.needCount ? 1 : 0
+      const bGroupByCount = b.stock >= searchingProduct.needCount ? 1 : 0
+
+      if (aGroupByCount !== bGroupByCount) {
+        return bGroupByCount - aGroupByCount
+      }
+
+      const aGroupByType = a.type === 'original' ? 1 : 0
+      const bGroupByType = b.type === 'original' ? 1 : 0
+
+      if (aGroupByType !== bGroupByType) {
+        return bGroupByType - aGroupByType
+      }
+
+      return a.prices.retail - b.prices.retail
+    })
+
+    return [searchingProduct.name, searchedProductsWithMatchingBarcodes] as const
+  })
+
+  const entities = await Promise.all(promises)
+
+  const res = Object.fromEntries(entities)
+  return res satisfies Record<SearchingProductName, SearchedProduct[]>
+}
+
+const searchedProductsQueryOptions = (
+  searchingProducts: SearchingProduct[],
+  allMatchingProductsByBarcodes: Partial<Record<Barcode, UniversalProduct[]>>,
+) => {
+  return queryOptions({
+    queryKey: [
+      'search',
+      {
+        searchingProducts,
+        allMatchingProductsByBarcodes,
+      },
+    ] as const,
+    queryFn: async () => {
+      await new Promise((res) => setTimeout(res, 0))
+
+      const res = await searchProducts(searchingProducts, allMatchingProductsByBarcodes)
+      console.log('res', unwrap(res))
+      // const toDb = Object.entries(res).map(([key, value]) => ({
+      //   name: key,
+      //   searchedProducts: value,
+      // }))
+      // db.searched.bulkPut(toDb)
+
       return res
     },
-  }))
+    // initialData: () =>
+    //  await  db.searched
+    //     .toArray()
+    //     .then((arr) => arr.map((item) => ({ [item.name]: item.searchedProducts }))),
+    placeholderData: (old) => old,
+    enabled: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
 }
 
 export function SearchPage() {
-  const [productsToSearch, setProductsToSearch] = createSignal(mockProductsToSearch)
+  const [searchingProducts, setSearchingProducts] = createSignal(mockSearchingProducts)
+
+  // const products = createLiveQuery(() => db.products.toArray())
+
+  // const productsLiveQuery = liveQuery(() => db.products.toArray())
+
+  // productsLiveQuery.subscribe((products) => {
+  //   queryClient.setQueryData(['products'], products)
+  // })
 
   const productsQuery = useQuery(() => ({
     queryKey: ['products'],
     queryFn: async () => {
+      // return []
       return await db.products.toArray()
     },
   }))
 
+  const allMatchingBarcodes = createMemo(() =>
+    productsQuery.data
+      ? getAllMatchingProductsByBarcodes(productsQuery.data)
+      : ({} as Record<Barcode, UniversalProduct[]>),
+  )
+
   const indexProducts = useIndexProducts(() => productsQuery.data)
-  const searchProducts = useSearchProducts(() => productsToSearch())
+  const searchedProductsQuery = useQuery(() =>
+    searchedProductsQueryOptions(searchingProducts(), allMatchingBarcodes()),
+  )
 
-  const getAllIntersectingSku = async () => {
-    const record: Record<string, UniversalProduct[]> = {}
-
-    const data = await db.products.toArray()
-    for (const product of data) {
-      if (!record[product.sku]) {
-        record[product.sku] = []
-      }
-      record[product.sku].push(product)
-    }
-
-    for (const sku in record) {
-      if (record[sku].length === 1) {
-        delete record[sku]
-      }
-    }
-
-    console.log('sku', record)
-  }
-
-  const getAllIntersectingBarcodes = async () => {
-    const record: Record<string, UniversalProduct[]> = {}
-
-    const data = await db.products.toArray()
-    for (const product of data) {
-      for (const barcode of product.barcodes) {
-        if (!record[barcode]) {
-          record[barcode] = []
-        }
-        record[barcode].push(product)
-      }
-    }
-
-    for (const barcode in record) {
-      if (record[barcode].length === 1) {
-        delete record[barcode]
-      }
-    }
-
-    console.log('barcodes', record)
-  }
-
-  onMount(async () => {
-    try {
-      await productsQuery.refetch()
-      await indexProducts.mutateAsync()
-      await searchProducts.mutateAsync()
-    } catch {}
-  })
-
-  createEffect(on(productsToSearch, () => searchProducts.mutate(), { defer: true }))
+  createEffect(
+    on(
+      () => productsQuery.isSuccess,
+      async () => {
+        await indexProducts.mutateAsync(undefined)
+        await searchedProductsQuery.refetch()
+      },
+    ),
+  )
 
   return (
     <main class="container mx-auto grid auto-rows-auto grid-cols-1 gap-y-10 pt-20">
@@ -175,14 +217,11 @@ export function SearchPage() {
         </Button>
 
         <Button
-          disabled={!indexProducts.isSuccess || searchProducts.isPending}
-          onClick={() => searchProducts.mutate()}
+          disabled={!indexProducts.isSuccess || searchedProductsQuery.isFetching}
+          onClick={() => searchedProductsQuery.refetch()}
         >
-          Найти {searchProducts.isPending && <Loader />}
+          Найти {searchedProductsQuery.isFetching && <Loader />}
         </Button>
-
-        <Button onClick={getAllIntersectingSku}>Sku</Button>
-        <Button onClick={getAllIntersectingBarcodes}>Barcodes</Button>
 
         {indexProducts.isSuccess && <p>Проиндексировано</p>}
       </div>
@@ -193,42 +232,41 @@ export function SearchPage() {
           : 'Всего ' + productsQuery.data!.length + ' товаров'}
       </div>
 
-      <Table>
+      <Table class="">
         <TableHeader>
           <TableRow>
             <TableHead class="w-10">№</TableHead>
-            <TableHead>Название</TableHead>
-            <TableHead class="w-50">Необходимое кол-во</TableHead>
+            <TableHead class="w-full">Название</TableHead>
+            <TableHead class="min-w-25 text-nowrap">Нужно шт.</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <Index each={productsToSearch()}>
-            {(searching, idx) => (
+          <Index each={searchingProducts()}>
+            {(searchingProduct, idx) => (
               <>
-                <TableRow class="bg-secondary">
+                <TableRow class="sticky top-0 z-1 bg-secondary hover:bg-[reset]">
                   <TableCell>{idx + 1}</TableCell>
                   <TableCell>
                     <input
                       class="w-full"
                       onChange={(e) =>
-                        setProductsToSearch((prev) =>
+                        setSearchingProducts((prev) =>
                           prev.map((item, i) =>
                             i === idx ? { ...item, name: e.currentTarget.value } : item,
                           ),
                         )
                       }
-                      value={searching().name}
+                      value={searchingProduct().name}
                     />
                   </TableCell>
-                  <TableCell>{searching().needCount}</TableCell>
+                  <TableCell>{searchingProduct().needCount}</TableCell>
                 </TableRow>
 
                 <Switch>
                   <Match
                     when={
-                      searchProducts.status === 'success' &&
-                      searchProducts.data &&
-                      searchProducts.data[searching().name]?.length === 0
+                      searchedProductsQuery.isSuccess &&
+                      searchedProductsQuery.data[searchingProduct().name]?.length === 0
                     }
                   >
                     <TableRow>
@@ -237,15 +275,22 @@ export function SearchPage() {
                   </Match>
 
                   <Match
-                    when={searchProducts.data && searchProducts.data[searching().name]?.length > 0}
+                    when={
+                      searchedProductsQuery.isSuccess &&
+                      searchedProductsQuery.data[searchingProduct().name]?.length > 0
+                    }
                   >
-                    <TableRow>
-                      <TableCell colspan={3}>
+                    <TableRow class="hover:bg-[reset]">
+                      <TableCell class="p-0" colspan={3}>
                         <SearchTable
-                          searching={searching()}
-                          searchProducts={searchProducts.data!}
+                          searchedProducts={searchedProductsQuery.data!}
+                          searchingProduct={searchingProduct()}
                         />
                       </TableCell>
+                    </TableRow>
+
+                    <TableRow class="hover:bg-[reset]">
+                      <TableCell class="p-0" colspan={3}></TableCell>
                     </TableRow>
                   </Match>
                 </Switch>
@@ -259,46 +304,62 @@ export function SearchPage() {
 }
 
 const SearchTable = (props: {
-  searching: ProductToSearch
-  searchProducts: Record<string, UniversalProduct[]>
+  searchingProduct: SearchingProduct
+  searchedProducts: Record<SearchingProductName, SearchedProduct[]>
 }) => {
   return (
-    <Table class="overflow-scroll">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead class="min-w-25"></TableHead>
-          <TableHead>Поставщик</TableHead>
-          <TableHead class="min-w-40">Название</TableHead>
+          <TableHead class="min-w-60">Название</TableHead>
           <TableHead class="w-full">Описание</TableHead>
+          <TableHead>Поставщик</TableHead>
           <TableHead>Артикул</TableHead>
-          <TableHead>Штрихкод(ы)</TableHead>
-          <TableHead class="w-max text-nowrap">Цена розничная &nbsp;Р</TableHead>
-          <TableHead class="w-max text-nowrap">Цена партнёрская &nbsp;Р</TableHead>
-          <TableHead class="w-max text-nowrap">На складе</TableHead>
+          <TableHead class="min-w-25">Штрихкоды</TableHead>
+          <TableHead class="w-max text-nowrap">Розничная &nbsp;₽</TableHead>
+          <TableHead class="w-max text-nowrap">Партнёрская &nbsp;₽</TableHead>
+          <TableHead class="min-w-25 text-nowrap">На складе</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        <For each={props.searchProducts[props.searching.name]}>
+        <Index each={props.searchedProducts[props.searchingProduct.name]}>
           {(searched) => (
-            <TableRow class={cn(searched.stock < props.searching.needCount && 'bg-error')}>
+            <TableRow
+              class={cn(
+                searched().stock < props.searchingProduct.needCount &&
+                  'bg-error hover:bg-[reset] dark:bg-[color-mix(in_oklab,var(--color-error)_20%,var(--color-background))]',
+                searched().type === 'matching-barcodes' && 'text-violet-200',
+              )}
+            >
               <TableCell>
                 <img
                   alt={searched.name}
-                  class="aspect-square w-full object-contain"
-                  src={searched.image}
+                  class="aspect-square w-full rounded-lg object-contain"
+                  src={searched().image}
                 />
               </TableCell>
-              <TableCell>{searched.provider}</TableCell>
-              <TableCell>{searched.name}</TableCell>
-              <TableCell>{searched.description}</TableCell>
-              <TableCell>{searched.sku}</TableCell>
-              <TableCell class="font-mono">{searched.barcodes.join(', ')}</TableCell>
-              <TableCell>{searched.prices.retail}</TableCell>
-              <TableCell>{searched.prices.partner}</TableCell>
-              <TableCell>{searched.stock}</TableCell>
+              <TableCell>
+                <p>{searched().name}</p>
+              </TableCell>
+              <TableCell>
+                <p class="line-clamp-3 text-ellipsis">{searched().description}</p>
+              </TableCell>
+              <TableCell>
+                <Badge variant={searched().provider === 'komus' ? 'secondary' : 'outline'}>
+                  {PROVIDERS_LABELS[searched().provider]}
+                </Badge>
+              </TableCell>
+              <TableCell class="font-mono">{searched().sku}</TableCell>
+              <TableCell>
+                <p class="line-clamp-3 w-[13ch] font-mono">{searched().barcodes.join(', ')}</p>
+              </TableCell>
+              <TableCell>{searched().prices.retail}</TableCell>
+              <TableCell>{searched().prices.partner}</TableCell>
+              <TableCell>{searched().stock}</TableCell>
             </TableRow>
           )}
-        </For>
+        </Index>
       </TableBody>
     </Table>
   )

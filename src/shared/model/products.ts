@@ -1,12 +1,12 @@
 import { infiniteQueryOptions } from '@tanstack/solid-query'
 import { komus, samson } from '~/shared/api'
-import { db } from '~/shared/lib/db'
+import { db } from '~/shared/lib'
 
 export const komusQueryOptions = infiniteQueryOptions({
   queryKey: ['products/komus'],
   queryFn: async ({ pageParam, signal }) => {
     const res = await komus.api.getUniversalProducts({ pageIndex: pageParam }, signal)
-    db.products.bulkAdd(res.data)
+    await db.products.bulkPut(res.data)
 
     return res
   },
@@ -20,7 +20,7 @@ export const samsonQueryOptions = infiniteQueryOptions({
   queryKey: ['products/samson'],
   queryFn: async ({ pageParam, signal }) => {
     const res = await samson.api.getUniversalProducts({ pageIndex: pageParam }, signal)
-    db.products.bulkAdd(res.data)
+    await db.products.bulkPut(res.data)
 
     return res
   },

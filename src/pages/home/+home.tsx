@@ -1,42 +1,42 @@
-import { createFileRoute, Link } from '@tanstack/solid-router'
-import { Charset, Index, IndexedDB, Worker } from 'flexsearch'
-import { createMemo, createSignal, For } from 'solid-js'
-import { mockProducts } from '~/shared/__mocks__'
-import { Button, TextField, TextFieldInput } from '~/shared/ui/kit'
-
-const index = new Index({
-  tokenize: 'forward',
-  fastupdate: true,
-  encoder: Charset.LatinBalance,
-  cache: 100,
-})
-
-const [products] = createSignal(mockProducts)
-
-for (const item of products()) {
-  index.add(item.id, item.name)
-}
+import { createLiveQuery, db } from '~/shared/lib'
+import { Button, ProviderStatus, TextField, TextFieldInput } from '~/shared/ui/kit'
 
 export function HomePage() {
-  const [search, setSearch] = createSignal('')
-
-  const result = createMemo(() => {
-    if (!search()) return products()
-    const ids = index.search(search(), {
-      suggest: true,
-      limit: 10,
-    })
-    const res = ids.map((id) => products().find((item) => item.id === id)!)
-    return res
-  })
+  const komusProducts = createLiveQuery(() =>
+    db.products.filter((p) => p.provider === 'komus').toArray(),
+  )
+  const samsonProduct = createLiveQuery(() =>
+    db.products.filter((p) => p.provider === 'samson').toArray(),
+  )
 
   return (
-    <div class="container mx-auto">
-      <TextField>
-        <TextFieldInput onInput={(e) => setSearch(e.currentTarget.value)} value={search()} />
-      </TextField>
+    <div class="container mx-auto mt-10 flex flex-col gap-y-8">
+      <Button class="w-fit" onClick={() => db.products.clear()}>
+        Очистить всё
+      </Button>
 
-      <For each={result()}>{(item) => <div>{item.name}</div>}</For>
+      <div class="grid grid-cols-2 gap-10">
+        <div class="flex flex-col gap-y-3 rounded-2xl bg-primary-foreground p-8">
+          <span>Комус</span>
+          <div class="">
+            <span>Загружено {komusProducts()?.length}</span>
+          </div>
+
+          <Button onClick={() => db.products.bulkDelete(komusProducts()?.map((p) => p.id) ?? [])}>
+            Очистить
+          </Button>
+        </div>
+
+        <div class="flex flex-col gap-y-3 rounded-2xl bg-primary-foreground p-8">
+          <span>Самсон</span>
+          <div class="">
+            <span>Загружено {samsonProduct()?.length}</span>
+          </div>
+          <Button onClick={() => db.products.bulkDelete(samsonProduct()?.map((p) => p.id) ?? [])}>
+            Очистить
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

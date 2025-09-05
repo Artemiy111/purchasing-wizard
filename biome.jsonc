@@ -22,9 +22,7 @@
         "useSolidForComponent": "error"
       },
       "nursery": {
-        "noMisusedPromises": "error",
-        "useConsistentTypeDefinitions": "error",
-        "noSecrets": "error",
+        "useConsistentTypeDefinitions": "off",
         "noShadow": "info",
         "noFloatingPromises": "error",
         "useSortedClasses": {

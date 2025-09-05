@@ -1,5 +1,5 @@
 import type { UseInfiniteQueryResult } from '@tanstack/solid-query'
-import { RotateCcwIcon } from 'lucide-solid'
+import RotateCcwIcon from 'lucide-solid/icons/rotate-ccw'
 import { Button } from './button'
 import { Loader } from './loader'
 

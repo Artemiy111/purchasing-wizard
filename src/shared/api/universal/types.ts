@@ -8,9 +8,13 @@ export const UniversalPrices = type({
 
 export type UniversalPrices = typeof UniversalPrices.infer
 
+export const UniversalProvider = type('"komus" | "samson"')
+
+export type UniversalProvider = typeof UniversalProvider.infer
+
 export const UniversalProduct = type({
   id: 'string',
-  provider: '"komus" | "samson"',
+  provider: UniversalProvider,
   name: 'string',
   description: 'string | undefined',
   sku: 'string',
